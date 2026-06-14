@@ -17,6 +17,7 @@ internal sealed class EnumDisplayConverter : IValueConverter
         EffectChoice e => L.EffectName(e),
         MetricLayoutChoice m => L.MetricLayoutName(m),
         AudioZoneMode a => L.AudioModeName(a),
+        AudioLayoutChoice al => L.AudioLayoutName(al),
         _ => value?.ToString() ?? string.Empty,
     };
 

@@ -52,6 +52,24 @@ internal sealed partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private double _audioSensitivity = 0.9;
 
+    // Global Audio overlay: spectrum vs three-region bars, and the bars multiplier.
+    [ObservableProperty]
+    private AudioLayoutChoice _audioLayout = AudioLayoutChoice.Spectrum;
+
+    [ObservableProperty]
+    private double _audioBarsMultiplier = 1.0;
+
+    public AudioLayoutChoice[] AudioLayoutOptions { get; } =
+    {
+        AudioLayoutChoice.Spectrum, AudioLayoutChoice.Bars,
+    };
+
+    /// <summary>True when the bars layout is selected (gates its multiplier slider).</summary>
+    public bool IsAudioBarsLayout => AudioLayout == AudioLayoutChoice.Bars;
+
+    public string AudioBarsMultiplierText =>
+        string.Format(CultureInfo.InvariantCulture, L.AudioBarsMultiplierFormat, AudioBarsMultiplier);
+
     // System-metric overlay.
     [ObservableProperty]
     private bool _showMetrics;
@@ -150,6 +168,8 @@ internal sealed partial class MainViewModel : ObservableObject
         }
         BrightnessPercent = s.BrightnessPercent;
         AudioSensitivity = s.AudioSensitivity;
+        AudioLayout = s.AudioLayout;
+        AudioBarsMultiplier = s.AudioBarsMultiplier;
         ShowMetrics = s.ShowMetrics;
         MetricLayout = s.MetricLayout;
         if (s.PercentThresholds.Length >= 3)
@@ -214,6 +234,18 @@ internal sealed partial class MainViewModel : ObservableObject
         Apply();
     }
 
+    partial void OnAudioLayoutChanged(AudioLayoutChoice value)
+    {
+        OnPropertyChanged(nameof(IsAudioBarsLayout));
+        Apply();
+    }
+
+    partial void OnAudioBarsMultiplierChanged(double value)
+    {
+        OnPropertyChanged(nameof(AudioBarsMultiplierText));
+        Apply();
+    }
+
     partial void OnShowMetricsChanged(bool value) => Apply();
     partial void OnMetricLayoutChanged(MetricLayoutChoice value) => Apply();
     partial void OnPct1Changed(decimal value) => Apply();
@@ -236,6 +268,8 @@ internal sealed partial class MainViewModel : ObservableObject
         _controller.EnableReactive = EnableReactive;
         _controller.EnableAudio = EnableAudio;
         _controller.AudioSensitivity = AudioSensitivity;
+        _controller.AudioLayout = AudioLayout;
+        _controller.AudioBarsMultiplier = AudioBarsMultiplier;
         _controller.ShowMetrics = ShowMetrics;
         _controller.MetricLayout = MetricLayout;
         _controller.PercentThresholds = percent;
@@ -251,6 +285,8 @@ internal sealed partial class MainViewModel : ObservableObject
         s.EnableReactive = EnableReactive;
         s.EnableAudio = EnableAudio;
         s.AudioSensitivity = AudioSensitivity;
+        s.AudioLayout = AudioLayout;
+        s.AudioBarsMultiplier = AudioBarsMultiplier;
         s.ShowMetrics = ShowMetrics;
         s.MetricLayout = MetricLayout;
         s.PercentThresholds = percent;

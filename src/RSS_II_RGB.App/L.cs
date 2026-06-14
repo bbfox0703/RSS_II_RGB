@@ -21,7 +21,9 @@ internal static class L
     public static string EffectLabel => S("Effect", "效果");
     public static string OverlaysLabel => S("Overlays", "疊加層");
     public static string ReactiveOverlay => S("Reactive — keypress flare + ripple", "反應 — 按鍵閃光 + 漣漪");
-    public static string AudioOverlay => S("Audio — frequency spectrum", "音訊 — 頻譜");
+    public static string AudioOverlay => S("Audio reactive", "音訊反應");
+    public static string AudioLayoutLabel => S("Audio layout", "音訊佈局");
+    public static string AudioBarsMultiplierFormat => S("Audio bars multiplier: {0:0.0}×", "音訊長條倍率：{0:0.0}×");
     public static string PriorityHint =>
         S("Reactive sits above audio; system metrics sit above both.",
           "反應位於音訊之上；系統指標位於兩者之上。");
@@ -107,6 +109,13 @@ internal static class L
         AudioZoneMode.Spectrum => S("Spectrum", "頻譜"),
         AudioZoneMode.SolidColor => S("Solid colour", "單色"),
         AudioZoneMode.SolidRainbow => S("Solid rainbow", "彩虹"),
+        _ => a.ToString(),
+    };
+
+    public static string AudioLayoutName(AudioLayoutChoice a) => a switch
+    {
+        AudioLayoutChoice.Spectrum => S("Spectrum", "頻譜"),
+        AudioLayoutChoice.Bars => S("Three-region bars", "三區長條"),
         _ => a.ToString(),
     };
 }

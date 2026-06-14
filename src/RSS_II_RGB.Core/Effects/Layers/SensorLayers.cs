@@ -152,3 +152,97 @@ public sealed class AudioVolumeLayer : IEffectLayer
     }
 }
 
+/// <summary>
+/// Splits the keyboard into three horizontal regions — treble (top alpha row),
+/// mid (home row), bass (bottom alpha row) — and lights each as a left-to-right
+/// bar whose length tracks that band's energy: the louder the band, the more keys
+/// in its row light up (e.g. heavy bass fills Left Shift → Right Shift). Additive
+/// overlay, so silence is transparent and the base effect shows through. Colours:
+/// bass = red, mid = green, treble = blue.
+/// </summary>
+public sealed class AudioBarsLayer : IEffectLayer
+{
+    private readonly SensorState _state;
+    private readonly int[] _bass;   // each row's render indices, ordered left-to-right
+    private readonly int[] _mid;
+    private readonly int[] _treble;
+    private readonly double _multiplier;
+    private readonly double[] _bands = new double[CoreConstants.AudioBandCount];
+
+    public AudioBarsLayer(string id, SensorState state, int[] bass, int[] mid, int[] treble,
+                          double multiplier = 1.0, int zOrder = 0, BlendMode blend = BlendMode.Additive)
+    {
+        Id = id;
+        _state = state;
+        _bass = bass;
+        _mid = mid;
+        _treble = treble;
+        _multiplier = multiplier;
+        ZOrder = zOrder;
+        Blend = blend;
+
+        var all = new List<int>(bass.Length + mid.Length + treble.Length);
+        all.AddRange(bass);
+        all.AddRange(mid);
+        all.AddRange(treble);
+        Mask = KeyMask.FromIndices(all.ToArray());
+    }
+
+    public string Id { get; }
+    public int ZOrder { get; }
+    public BlendMode Blend { get; }
+    public KeyMask Mask { get; }
+    public bool IsComplete => false;
+
+    public void Render(Span<Rgb> target, in EffectContext ctx)
+    {
+        int n = _state.CopyAudioBands(_bands);
+        if (n <= 0)
+        {
+            return; // silent — additive black, base shows through
+        }
+
+        DrawBar(target, _bass, RegionLevel(n, CoreConstants.AudioMinHz, CoreConstants.AudioBassMaxHz), hue: 0.00);   // red
+        DrawBar(target, _mid, RegionLevel(n, CoreConstants.AudioBassMaxHz, CoreConstants.AudioMidMaxHz), hue: 0.33); // green
+        DrawBar(target, _treble, RegionLevel(n, CoreConstants.AudioMidMaxHz, CoreConstants.AudioMaxHz), hue: 0.66);  // blue
+    }
+
+    private void DrawBar(Span<Rgb> target, int[] keys, double level, double hue)
+    {
+        level = Math.Clamp(level * _multiplier, 0, 1);
+        int lit = (int)Math.Round(level * keys.Length);
+        if (lit <= 0)
+        {
+            return;
+        }
+
+        Rgb color = Rgb.FromHsv(hue, 1, 1);
+        for (int i = 0; i < lit && i < keys.Length; i++)
+        {
+            int idx = keys[i];
+            if ((uint)idx < (uint)target.Length)
+            {
+                target[idx] = color;
+            }
+        }
+    }
+
+    // Average magnitude of the bands whose geometric centre falls in [loHz, hiHz).
+    private double RegionLevel(int n, double loHz, double hiHz)
+    {
+        double ratio = CoreConstants.AudioMaxHz / CoreConstants.AudioMinHz;
+        double sum = 0;
+        int count = 0;
+        for (int b = 0; b < n; b++)
+        {
+            double centre = CoreConstants.AudioMinHz * Math.Pow(ratio, (b + 0.5) / n);
+            if (centre >= loHz && centre < hiHz)
+            {
+                sum += _bands[b];
+                count++;
+            }
+        }
+        return count > 0 ? sum / count : 0;
+    }
+}
+

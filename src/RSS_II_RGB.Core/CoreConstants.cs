@@ -30,6 +30,14 @@ public static class CoreConstants
     public const byte CmdSave = 0x50;    // 50 55 -> persist current mode to flash
     public const byte SaveArg = 0x55;
 
+    // ----- Audio analysis (shared by SensorsHost AudioProvider and the audio layers) -----
+    public const int AudioBandCount = 24;    // logarithmic FFT bands (one per keyboard column)
+    public const double AudioMinHz = 30;     // low edge — sub-bass below this is ignored
+    public const double AudioMaxHz = 16000;  // high edge — treble cap
+    // Three-region split for the "bars" audio layout.
+    public const double AudioBassMaxHz = 250;  // bass:   AudioMinHz..250 Hz
+    public const double AudioMidMaxHz = 2000;  // mid:    250..2000 Hz   (treble: 2000..AudioMaxHz)
+
     // ----- Render loop -----
     public const int DefaultTargetFps = 40; // device sustains ~42 FPS
 

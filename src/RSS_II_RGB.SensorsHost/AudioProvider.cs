@@ -1,6 +1,7 @@
 using NAudio.CoreAudioApi;
 using NAudio.Dsp;
 using NAudio.Wave;
+using RSS_II_RGB.Core;
 using RSS_II_RGB.Core.Ipc;
 
 namespace RSS_II_RGB.SensorsHost;
@@ -14,9 +15,9 @@ internal sealed class AudioProvider : ISensorProvider
 {
     private const int FftSize = 1024;
     private const int FftPow = 10;        // log2(FftSize)
-    private const int BandCount = 24;     // one per keyboard column
-    private const double FMinHz = 30;     // ignore sub-bass rumble below this
-    private const double FMaxHz = 16000;  // treble cap (most adults can't hear above ~15k)
+    private const int BandCount = CoreConstants.AudioBandCount; // one per keyboard column
+    private const double FMinHz = CoreConstants.AudioMinHz;     // ignore sub-bass rumble below this
+    private const double FMaxHz = CoreConstants.AudioMaxHz;     // treble cap (most adults can't hear above ~15k)
     private const double SilenceRms = 0.002; // overall loudness below this = black (no flicker)
     private const double PeakFloor = 0.02;   // per-band gain floor
     private const double PeakDecay = 0.99;   // adaptive-gain decay per FFT frame

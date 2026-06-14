@@ -32,6 +32,15 @@
                       IsChecked="{Binding EnableReactive}" IsEnabled="{Binding IsConnected}"/>
             <CheckBox Content="{x:Static vm:L.AudioOverlay}"
                       IsChecked="{Binding EnableAudio}" IsEnabled="{Binding IsConnected}"/>
+            <TextBlock Text="{x:Static vm:L.AudioLayoutLabel}" FontWeight="SemiBold"/>
+            <ComboBox ItemsSource="{Binding AudioLayoutOptions}" SelectedItem="{Binding AudioLayout}"
+                      HorizontalAlignment="Stretch" IsEnabled="{Binding EnableAudio}">
+                <ComboBox.ItemTemplate>
+                    <DataTemplate x:DataType="vm:AudioLayoutChoice">
+                        <TextBlock Text="{Binding Converter={x:Static vm:EnumDisplayConverter.Instance}}"/>
+                    </DataTemplate>
+                </ComboBox.ItemTemplate>
+            </ComboBox>
             <TextBlock Text="{x:Static vm:L.PriorityHint}"
                        Opacity="0.6" TextWrapping="Wrap"/>
 
@@ -40,6 +49,11 @@
 
             <TextBlock Text="{Binding AudioSensitivityText}" FontWeight="SemiBold"/>
             <Slider Minimum="0.5" Maximum="4" Value="{Binding AudioSensitivity}" IsEnabled="{Binding IsConnected}"/>
+
+            <TextBlock Text="{Binding AudioBarsMultiplierText}" FontWeight="SemiBold"
+                       IsVisible="{Binding IsAudioBarsLayout}"/>
+            <Slider Minimum="0.5" Maximum="2" Value="{Binding AudioBarsMultiplier}"
+                    IsEnabled="{Binding IsConnected}" IsVisible="{Binding IsAudioBarsLayout}"/>
 
             <TextBlock Text="{x:Static vm:L.ColourLabel}" FontWeight="SemiBold"/>
             <ColorPicker Color="{Binding PickedColor}" IsEnabled="{Binding IsConnected}" HorizontalAlignment="Left"/>

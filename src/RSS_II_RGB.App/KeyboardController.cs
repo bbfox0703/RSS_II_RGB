@@ -50,6 +50,10 @@ internal sealed class KeyboardController : IAsyncDisposable
     /// <summary>Brightness multiplier for the audio visualiser (set before SetGlobalEffect).</summary>
     public double AudioSensitivity { get; set; } = 0.9;
 
+    // Global Audio overlay layout (spectrum vs three-region bars) and the bars multiplier.
+    public AudioLayoutChoice AudioLayout { get; set; } = AudioLayoutChoice.Spectrum;
+    public double AudioBarsMultiplier { get; set; } = 1.0;
+
     // Independent global overlays, toggled from the main UI (set before SetGlobalEffect/SetZones).
     // Reactive is the higher-priority of the two: it sits above the zones, audio below them.
     public bool EnableReactive { get; set; }
@@ -127,13 +131,25 @@ internal sealed class KeyboardController : IAsyncDisposable
         // Layer 0 — base effect from the main UI, covering every key.
         AddEffectLayers(layers, "global", _globalEffect, _globalColor, KeyMask.All, baseZ: ZBase);
 
-        // Layer 1 — global Audio overlay (spectrum). Additive so silent frames are
-        // transparent and the base effect shows through.
+        // Layer 1 — global Audio overlay. Additive so silent frames are transparent
+        // and the base effect shows through. Spectrum and bars are mutually exclusive.
         if (EnableAudio)
         {
-            layers.Add(new AudioReactiveLayer("audio", _sensors, KeyMask.All,
-                                              sensitivity: AudioSensitivity, zOrder: ZAudio,
+            if (AudioLayout == AudioLayoutChoice.Bars)
+            {
+                layers.Add(new AudioBarsLayer("audio", _sensors,
+                                              AudioBarRows.BassRow(_profile),
+                                              AudioBarRows.MidRow(_profile),
+                                              AudioBarRows.TrebleRow(_profile),
+                                              multiplier: AudioBarsMultiplier, zOrder: ZAudio,
                                               blend: BlendMode.Additive));
+            }
+            else
+            {
+                layers.Add(new AudioReactiveLayer("audio", _sensors, KeyMask.All,
+                                                  sensitivity: AudioSensitivity, zOrder: ZAudio,
+                                                  blend: BlendMode.Additive));
+            }
         }
 
         // Layers 2 & 3 — zone overrides. Non-audio zones sit below all audio zones,

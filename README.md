@@ -39,8 +39,11 @@ already‑running window.
   Rainbow, or Wave. Set its **Colour** and **Brightness**.
 - **Overlays** — independent tick‑boxes layered on top of the base effect:
   - **Reactive** — keys flare and ripple as you type.
-  - **Audio** — a frequency spectrum reacts to whatever is playing (with a
-    sensitivity slider).
+  - **Audio** — reacts to whatever is playing. Two mutually-exclusive layouts:
+    a per-key **frequency spectrum** (sensitivity slider), or **three-region
+    bars** — bass / mid / treble as horizontal VU bars across the Z, A and Tab
+    rows (the louder a band, the further its row fills), with its own 0.5–2×
+    multiplier.
 - **System metrics** — show CPU %, memory %, GPU % and GPU temperature as 1–4 lit
   cells (green→red) on a chosen key group. **No administrator rights needed.**
 - **Zone editor** — select keys (click or drag a box) and give them their own

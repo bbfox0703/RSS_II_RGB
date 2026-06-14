@@ -19,6 +19,12 @@ internal sealed class AppSettings
 
     public double AudioSensitivity { get; set; } = 0.9;
 
+    // Global audio overlay: spectrum vs three-region bars, and the bars multiplier.
+    [JsonConverter(typeof(JsonStringEnumConverter<AudioLayoutChoice>))]
+    public AudioLayoutChoice AudioLayout { get; set; } = AudioLayoutChoice.Spectrum;
+
+    public double AudioBarsMultiplier { get; set; } = 1.0;
+
     // System-metric overlay.
     public bool ShowMetrics { get; set; }
 

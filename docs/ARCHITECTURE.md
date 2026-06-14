@@ -50,7 +50,8 @@ spectrum); both stay below the metric bars.
 
 Effects in `Core/Effects/Layers`: Solid, Breathing, Rainbow, Wave (by column),
 KeypressFade, Ripple, TempIndicator, AudioReactive (spectrum), AudioVolume
-(loudness), MetricOverlay (CPU/Mem/GPU bars).
+(loudness), AudioBars (bass/mid/treble VU bars on three key rows), MetricOverlay
+(CPU/Mem/GPU bars).
 
 ## Render loop & threading
 
