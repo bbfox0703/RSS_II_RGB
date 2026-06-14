@@ -1,0 +1,40 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:RSS_II_RGB.App"
+        x:Class="RSS_II_RGB.App.MainWindow"
+        x:DataType="vm:MainViewModel"
+        Title="Strix Scope II RGB"
+        Width="440" Height="440"
+        CanResize="False"
+        WindowStartupLocation="CenterScreen">
+
+    <ScrollViewer>
+        <StackPanel Margin="22" Spacing="14">
+            <TextBlock Text="Strix Scope II RGB" FontSize="20" FontWeight="Bold"/>
+            <TextBlock Text="{Binding StatusText}" TextWrapping="Wrap" Opacity="0.8"/>
+
+            <TextBlock Text="Effect" FontWeight="SemiBold"/>
+            <ComboBox ItemsSource="{Binding Effects}"
+                      SelectedItem="{Binding SelectedEffect}"
+                      HorizontalAlignment="Stretch"
+                      IsEnabled="{Binding IsConnected}"/>
+
+            <TextBlock Text="{Binding BrightnessPercent, StringFormat='Brightness: {0:0}%'}" FontWeight="SemiBold"/>
+            <Slider Minimum="0" Maximum="100" Value="{Binding BrightnessPercent}" IsEnabled="{Binding IsConnected}"/>
+
+            <TextBlock Text="Colour" FontWeight="SemiBold"/>
+            <ColorPicker Color="{Binding PickedColor}" IsEnabled="{Binding IsConnected}" HorizontalAlignment="Left"/>
+            <WrapPanel Orientation="Horizontal">
+                <Button Content="Red"     Command="{Binding SetColorCommand}" CommandParameter="FF0000" Margin="0,0,6,6"/>
+                <Button Content="Green"   Command="{Binding SetColorCommand}" CommandParameter="00FF00" Margin="0,0,6,6"/>
+                <Button Content="Blue"    Command="{Binding SetColorCommand}" CommandParameter="0066FF" Margin="0,0,6,6"/>
+                <Button Content="Cyan"    Command="{Binding SetColorCommand}" CommandParameter="00FF66" Margin="0,0,6,6"/>
+                <Button Content="Magenta" Command="{Binding SetColorCommand}" CommandParameter="FF00FF" Margin="0,0,6,6"/>
+                <Button Content="White"   Command="{Binding SetColorCommand}" CommandParameter="FFFFFF" Margin="0,0,6,6"/>
+            </WrapPanel>
+
+            <TextBlock Text="Tip: choose 'Reactive' and type — each key flares and ripples."
+                       Opacity="0.6" TextWrapping="Wrap"/>
+        </StackPanel>
+    </ScrollViewer>
+</Window>

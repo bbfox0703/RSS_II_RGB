@@ -427,3 +427,8 @@ FodyWeavers.xsd
 *.msix
 *.msm
 *.msp
+
+# Vendored dependency clones — recreate with vendor/update_vendors.ps1
+# (CLAUDE.md rule 8: clones, not submodules). The script is tracked; clones are not.
+/vendor/*
+!/vendor/update_vendors.ps1

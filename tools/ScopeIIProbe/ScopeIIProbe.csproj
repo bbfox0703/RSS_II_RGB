@@ -1,0 +1,34 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Minimal verification harness (throwaway POC, NOT production).
+
+    Goal: prove on real hardware that the OpenRGB "TUF keyboard" protocol
+    drives a Strix Scope II. Runs as a plain JIT console so we can iterate
+    fast; the production app will replace this with raw Win32 P/Invoke behind
+    a Core interface (CLAUDE.md rules 4 & 5).
+
+    It P/Invokes the SAME hidapi.dll OpenRGB ships, so every packet byte
+    offset maps 1:1 to the C++ we ported from.
+  -->
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Platforms>x64</Platforms>
+    <PlatformTarget>x64</PlatformTarget>
+    <AssemblyName>ScopeIIProbe</AssemblyName>
+    <RootNamespace>ScopeIIProbe</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Borrow the prebuilt hidapi from the vendored OpenRGB tree (read-only). -->
+    <None Include="..\..\vendor\openrgb\dependencies\hidapi-win\x64\hidapi.dll">
+      <Link>hidapi.dll</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+</Project>

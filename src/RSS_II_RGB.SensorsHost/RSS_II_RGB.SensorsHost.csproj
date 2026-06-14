@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Future non-AOT helper process: CPU/GPU temperature (LibreHardwareMonitor) and
+    audio capture (WASAPI + FFT) — reflection-heavy deps deliberately isolated here,
+    OUT of the AOT main app (CLAUDE.md rule 5/6 trade-off agreed with the user).
+    Milestone 1 ships only a stub so the IPC seam compiles. Intentionally NOT AOT.
+  -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+    <Platforms>x64</Platforms>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\RSS_II_RGB.Core\RSS_II_RGB.Core.csproj" />
+  </ItemGroup>
+
+</Project>
