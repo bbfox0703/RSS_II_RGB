@@ -29,6 +29,14 @@ internal sealed partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private double _brightnessPercent = 100;
 
+    // Independent display overlays, separate from the base effect (layered on top).
+    // Reactive outranks Audio: keypress flares always show, audio sits below them.
+    [ObservableProperty]
+    private bool _enableReactive;
+
+    [ObservableProperty]
+    private bool _enableAudio;
+
     // Audio visualiser brightness multiplier (1 = raw, higher fills the keyboard more).
     [ObservableProperty]
     private double _audioSensitivity = 0.9;
@@ -62,11 +70,11 @@ internal sealed partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private Color _pickedColor = Color.FromRgb(0x00, 0xFF, 0x66);
 
+    // Base effects only. Reactive and Audio are independent overlay toggles below.
     public EffectChoice[] Effects { get; } =
     {
         EffectChoice.Off, EffectChoice.Solid, EffectChoice.Breathing,
-        EffectChoice.Rainbow, EffectChoice.Wave, EffectChoice.Reactive,
-        EffectChoice.Audio,
+        EffectChoice.Rainbow, EffectChoice.Wave,
     };
 
     public MainViewModel(KeyboardController controller, SettingsService settings)
@@ -97,10 +105,27 @@ internal sealed partial class MainViewModel : ObservableObject
         // Restore the saved setup.
         _loading = true;
         AppSettings s = _settings.Settings;
-        // CpuTemp/GpuTemp were removed as global effects; fall back if one was saved.
-        SelectedEffect = s.GlobalEffect is EffectChoice.CpuTemp or EffectChoice.GpuTemp
-            ? EffectChoice.Rainbow
-            : s.GlobalEffect;
+        EnableReactive = s.EnableReactive;
+        EnableAudio = s.EnableAudio;
+        // Reactive/Audio are now overlay toggles, and CpuTemp/GpuTemp are no longer
+        // base effects. Migrate any of those legacy choices to a base + the toggle.
+        switch (s.GlobalEffect)
+        {
+            case EffectChoice.Reactive:
+                SelectedEffect = EffectChoice.Off;
+                EnableReactive = true;
+                break;
+            case EffectChoice.Audio:
+                SelectedEffect = EffectChoice.Off;
+                EnableAudio = true;
+                break;
+            case EffectChoice.CpuTemp or EffectChoice.GpuTemp:
+                SelectedEffect = EffectChoice.Rainbow;
+                break;
+            default:
+                SelectedEffect = s.GlobalEffect;
+                break;
+        }
         if (TryParseColor(s.GlobalColorHex, out Color color))
         {
             PickedColor = color;
@@ -138,6 +163,10 @@ internal sealed partial class MainViewModel : ObservableObject
 
     partial void OnSelectedEffectChanged(EffectChoice value) => Apply();
 
+    partial void OnEnableReactiveChanged(bool value) => Apply();
+
+    partial void OnEnableAudioChanged(bool value) => Apply();
+
     partial void OnBrightnessPercentChanged(double value) => Apply();
 
     partial void OnPickedColorChanged(Color value) => Apply();
@@ -163,6 +192,8 @@ internal sealed partial class MainViewModel : ObservableObject
         double[] percent = { (double)Pct1, (double)Pct2, (double)Pct3 };
         double[] temp = { (double)Temp1, (double)Temp2, (double)Temp3 };
 
+        _controller.EnableReactive = EnableReactive;
+        _controller.EnableAudio = EnableAudio;
         _controller.AudioSensitivity = AudioSensitivity;
         _controller.ShowMetrics = ShowMetrics;
         _controller.MetricLayout = MetricLayout;
@@ -176,6 +207,8 @@ internal sealed partial class MainViewModel : ObservableObject
         s.GlobalEffect = SelectedEffect;
         s.GlobalColorHex = $"{PickedColor.R:X2}{PickedColor.G:X2}{PickedColor.B:X2}";
         s.BrightnessPercent = BrightnessPercent;
+        s.EnableReactive = EnableReactive;
+        s.EnableAudio = EnableAudio;
         s.AudioSensitivity = AudioSensitivity;
         s.ShowMetrics = ShowMetrics;
         s.MetricLayout = MetricLayout;

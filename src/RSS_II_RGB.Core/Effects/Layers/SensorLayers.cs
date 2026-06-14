@@ -56,7 +56,9 @@ public sealed class TempIndicatorLayer : IEffectLayer
 /// <summary>
 /// A spectrum visualiser: maps audio frequency bands across the keyboard columns
 /// (low frequencies on the left). Hue tracks the band, brightness its magnitude.
-/// Black when nothing is playing.
+/// Black when nothing is playing. The blend mode is configurable: a zone uses
+/// <see cref="BlendMode.Normal"/> (opaque on its keys), while a global overlay
+/// uses <see cref="BlendMode.Additive"/> so silent frames let the base show through.
 /// </summary>
 public sealed class AudioReactiveLayer : IEffectLayer
 {
@@ -64,18 +66,20 @@ public sealed class AudioReactiveLayer : IEffectLayer
     private readonly double[] _bands = new double[64];
     private readonly double _sensitivity;
 
-    public AudioReactiveLayer(string id, SensorState state, KeyMask mask, double sensitivity = 1.0, int zOrder = 0)
+    public AudioReactiveLayer(string id, SensorState state, KeyMask mask, double sensitivity = 1.0,
+                              int zOrder = 0, BlendMode blend = BlendMode.Normal)
     {
         Id = id;
         _state = state;
         Mask = mask;
         _sensitivity = sensitivity;
         ZOrder = zOrder;
+        Blend = blend;
     }
 
     public string Id { get; }
     public int ZOrder { get; }
-    public BlendMode Blend => BlendMode.Normal;
+    public BlendMode Blend { get; }
     public KeyMask Mask { get; }
     public bool IsComplete => false;
 

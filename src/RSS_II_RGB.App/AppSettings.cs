@@ -12,6 +12,11 @@ internal sealed class AppSettings
 
     public double BrightnessPercent { get; set; } = 100;
 
+    // Independent display overlays, layered on top of the base effect.
+    public bool EnableReactive { get; set; }
+
+    public bool EnableAudio { get; set; }
+
     public double AudioSensitivity { get; set; } = 0.9;
 
     // System-metric overlay.

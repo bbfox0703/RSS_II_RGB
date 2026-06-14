@@ -45,6 +45,11 @@ internal sealed class KeyboardController : IAsyncDisposable
     /// <summary>Brightness multiplier for the audio visualiser (set before SetGlobalEffect).</summary>
     public double AudioSensitivity { get; set; } = 0.9;
 
+    // Independent global overlays, toggled from the main UI (set before SetGlobalEffect/SetZones).
+    // Reactive is the higher-priority of the two: it sits above the zones, audio below them.
+    public bool EnableReactive { get; set; }
+    public bool EnableAudio { get; set; }
+
     // System-metric overlay configuration (set before SetGlobalEffect/SetZones).
     public bool ShowMetrics { get; set; }
     public MetricLayoutChoice MetricLayout { get; set; } = MetricLayoutChoice.FunctionRow;
@@ -94,6 +99,15 @@ internal sealed class KeyboardController : IAsyncDisposable
         Rebuild();
     }
 
+    // Fixed z-order bands for the display priority stack (higher = more on top).
+    // Each band is far enough apart that per-item increments never collide.
+    private const int ZBase = 0;           // Layer 0: main-UI base effect (every key)
+    private const int ZAudio = 1_000;      // Layer 1: global Audio overlay
+    private const int ZZoneOther = 10_000; // Layer 2: non-audio zones
+    private const int ZZoneAudio = 20_000; // Layer 3: audio zones
+    private const int ZReactive = 30_000;  // Layer 4: global Reactive overlay
+    private const int ZMetrics = 500_000;  // Layer 5: system-metric bars (top)
+
     private void Rebuild()
     {
         if (_engine is null)
@@ -102,9 +116,23 @@ internal sealed class KeyboardController : IAsyncDisposable
         }
 
         var layers = new List<IEffectLayer>();
-        AddEffectLayers(layers, "global", _globalEffect, _globalColor, KeyMask.All, baseZ: 0);
 
-        int z = 100;
+        // Layer 0 — base effect from the main UI, covering every key.
+        AddEffectLayers(layers, "global", _globalEffect, _globalColor, KeyMask.All, baseZ: ZBase);
+
+        // Layer 1 — global Audio overlay (spectrum). Additive so silent frames are
+        // transparent and the base effect shows through.
+        if (EnableAudio)
+        {
+            layers.Add(new AudioReactiveLayer("audio", _sensors, KeyMask.All,
+                                              sensitivity: AudioSensitivity, zOrder: ZAudio,
+                                              blend: BlendMode.Additive));
+        }
+
+        // Layers 2 & 3 — zone overrides. Non-audio zones sit below all audio zones,
+        // so a zone spectrum always wins over a static zone on overlapping keys.
+        int zOther = ZZoneOther;
+        int zAudio = ZZoneAudio;
         foreach (Zone zone in _zones)
         {
             if (zone.KeyIndices.Count == 0)
@@ -112,15 +140,26 @@ internal sealed class KeyboardController : IAsyncDisposable
                 continue;
             }
             KeyMask mask = KeyMask.FromIndices(zone.KeyIndices is int[] arr ? arr : zone.KeyIndices.ToArray());
-            AddEffectLayers(layers, $"zone-{z}", zone.Effect, zone.Color, mask, baseZ: z, zone.AudioMode);
-            z += 100;
+            bool isAudioZone = zone.Effect == EffectChoice.Audio;
+            int baseZ = isAudioZone ? zAudio : zOther;
+            AddEffectLayers(layers, $"zone-{baseZ}", zone.Effect, zone.Color, mask, baseZ, zone.AudioMode);
+            if (isAudioZone) { zAudio += 10; } else { zOther += 10; }
         }
 
-        // System-metric bars overlay on top of the global effect and zones.
+        // Layer 4 — global Reactive overlay (keypress flare + ripple). Additive
+        // overlays only touch pressed keys, so everything below shows through when idle.
+        if (EnableReactive)
+        {
+            layers.Add(new KeypressFadeLayer("reactive-fade", Rgb.White, fadeSeconds: 0.6, zOrder: ZReactive));
+            layers.Add(new RippleLayer("reactive-ripple", new Rgb(0, 180, 255), speedGridPerSec: 14,
+                                       width: 1.3, fadeSeconds: 0.8, zOrder: ZReactive + 10));
+        }
+
+        // Layer 5 — system-metric bars on top of every effect and zone.
         if (ShowMetrics)
         {
             layers.Add(new MetricOverlayLayer("metrics", _sensors, MetricLayouts.Build(MetricLayout),
-                                              PercentThresholds, TempThresholds, zOrder: 500));
+                                              PercentThresholds, TempThresholds, zOrder: ZMetrics));
         }
 
         // Master brightness on top: a Multiply layer that uniformly scales the result.
@@ -134,9 +173,8 @@ internal sealed class KeyboardController : IAsyncDisposable
         _engine.SetEffectLayers(layers);
     }
 
-    // Maps an effect choice to its layer(s), masked to the given keys. Reactive is
-    // global-only (its overlays don't yet honour a mask), so a Reactive zone falls
-    // back to its dim base.
+    // Maps a base/zone effect choice to its layer(s), masked to the given keys.
+    // Reactive and the global Audio overlay are composed directly in Rebuild, not here.
     private void AddEffectLayers(List<IEffectLayer> layers, string id, EffectChoice effect,
                                  Rgb color, KeyMask mask, int baseZ,
                                  AudioZoneMode audioMode = AudioZoneMode.Spectrum)
@@ -157,12 +195,6 @@ internal sealed class KeyboardController : IAsyncDisposable
                 break;
             case EffectChoice.Wave:
                 layers.Add(new WaveLayer(id, mask, zOrder: baseZ));
-                break;
-            case EffectChoice.Reactive:
-                layers.Add(new SolidLayer($"{id}-base", new Rgb(0, 0, 20), mask, baseZ));
-                layers.Add(new KeypressFadeLayer($"{id}-fade", Rgb.White, fadeSeconds: 0.6, zOrder: baseZ + 10));
-                layers.Add(new RippleLayer($"{id}-ripple", new Rgb(0, 180, 255), speedGridPerSec: 14,
-                                           width: 1.3, fadeSeconds: 0.8, zOrder: baseZ + 20));
                 break;
             case EffectChoice.CpuTemp:
                 layers.Add(new TempIndicatorLayer(id, _sensors, gpu: false, mask, zOrder: baseZ));

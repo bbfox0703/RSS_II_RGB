@@ -20,6 +20,14 @@
                       HorizontalAlignment="Stretch"
                       IsEnabled="{Binding IsConnected}"/>
 
+            <TextBlock Text="Overlays" FontWeight="SemiBold"/>
+            <CheckBox Content="Reactive — keypress flare + ripple"
+                      IsChecked="{Binding EnableReactive}" IsEnabled="{Binding IsConnected}"/>
+            <CheckBox Content="Audio — frequency spectrum"
+                      IsChecked="{Binding EnableAudio}" IsEnabled="{Binding IsConnected}"/>
+            <TextBlock Text="Reactive sits above audio; system metrics sit above both."
+                       Opacity="0.6" TextWrapping="Wrap"/>
+
             <TextBlock Text="{Binding BrightnessPercent, StringFormat='Brightness: {0:0}%'}" FontWeight="SemiBold"/>
             <Slider Minimum="0" Maximum="100" Value="{Binding BrightnessPercent}" IsEnabled="{Binding IsConnected}"/>
 
@@ -63,7 +71,7 @@
                 </StackPanel>
             </Expander>
 
-            <TextBlock Text="Tip: choose 'Reactive' and type — each key flares and ripples."
+            <TextBlock Text="Tip: tick 'Reactive' and type — each key flares and ripples on top of your effect."
                        Opacity="0.6" TextWrapping="Wrap"/>
         </StackPanel>
     </ScrollViewer>

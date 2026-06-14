@@ -13,11 +13,14 @@ effect layers and streams each frame to the keyboard over the vendor HID
 
 - **Software effects:** Solid, Breathing, Rainbow, and a smooth **Wave** the
   firmware itself can't render — all driven by the host, not firmware presets.
-- **Reactive lighting:** press a key and it flares + fades, with an expanding
-  **ripple** across the board (global low‑level keyboard hook).
-- **Audio reactive:** a frequency **spectrum** across the keys (WASAPI loopback
-  + FFT, logarithmic bands so bass/mid/treble each span ~⅓ of the width), with a
-  sensitivity control and per‑frame smoothing.
+- **Reactive lighting:** an independent overlay toggle — press a key and it
+  flares + fades, with an expanding **ripple** across the board (global low‑level
+  keyboard hook), layered on top of whatever base effect is running.
+- **Audio reactive:** an independent overlay toggle — a frequency **spectrum**
+  across the keys (WASAPI loopback + FFT, logarithmic bands so bass/mid/treble
+  each span ~⅓ of the width), with a sensitivity control and per‑frame smoothing.
+- **Display priority:** the overlays form a fixed stack — system metrics on top,
+  then reactive, then zones, then audio, over the base effect.
 - **System‑metric overlay:** CPU %, memory %, GPU % and GPU temperature shown as
   1–4 lit cells (green→red) on a chosen key group — laid over whatever effect is
   running. **No administrator rights required.**

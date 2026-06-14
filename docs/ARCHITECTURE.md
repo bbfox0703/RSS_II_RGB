@@ -31,6 +31,23 @@ layer, mask = all) and "different effects on different key groups" (multiple
 masked layers — the Synapse‑style zone editor). The metric overlay and reactive
 overlays are simply higher‑z layers that touch only their own keys.
 
+`KeyboardController` assigns z‑orders from **fixed priority bands** so the stack
+reads top‑down regardless of how many zones exist:
+
+| z band | layer | notes |
+| --- | --- | --- |
+| 500 000 | System metrics | top — always visible |
+| 30 000 | Reactive overlay | global keypress flare + ripple (Additive) |
+| 20 000+ | Audio zones | zone spectrum/volume |
+| 10 000+ | Other zones | static zone effects |
+| 1 000 | Audio overlay | global spectrum (Additive) |
+| 0 | Base effect | main‑UI effect over every key |
+
+Reactive and the global Audio overlay are independent main‑UI toggles, not effect
+modes — they composite **Additive** so idle/silent frames stay transparent and the
+layers below show through. Reactive outranks Audio (keypress flares win over a
+spectrum); both stay below the metric bars.
+
 Effects in `Core/Effects/Layers`: Solid, Breathing, Rainbow, Wave (by column),
 KeypressFade, Ripple, TempIndicator, AudioReactive (spectrum), AudioVolume
 (loudness), MetricOverlay (CPU/Mem/GPU bars).
