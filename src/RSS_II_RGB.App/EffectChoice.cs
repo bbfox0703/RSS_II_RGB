@@ -11,4 +11,5 @@ internal enum EffectChoice
     Reactive,
     CpuTemp,
     GpuTemp,
+    Audio,
 }

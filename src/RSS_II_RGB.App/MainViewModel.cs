@@ -29,6 +29,10 @@ internal sealed partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private double _brightnessPercent = 100;
 
+    // Audio visualiser brightness multiplier (1 = raw, higher fills the keyboard more).
+    [ObservableProperty]
+    private double _audioSensitivity = 1.5;
+
     // Single source of truth for the effect colour (ColorPicker + preset swatches).
     [ObservableProperty]
     private Color _pickedColor = Color.FromRgb(0x00, 0xFF, 0x66);
@@ -37,7 +41,7 @@ internal sealed partial class MainViewModel : ObservableObject
     {
         EffectChoice.Off, EffectChoice.Solid, EffectChoice.Breathing,
         EffectChoice.Rainbow, EffectChoice.Wave, EffectChoice.Reactive,
-        EffectChoice.CpuTemp, EffectChoice.GpuTemp,
+        EffectChoice.CpuTemp, EffectChoice.GpuTemp, EffectChoice.Audio,
     };
 
     public MainViewModel(KeyboardController controller, SettingsService settings)
@@ -74,6 +78,7 @@ internal sealed partial class MainViewModel : ObservableObject
             PickedColor = color;
         }
         BrightnessPercent = s.BrightnessPercent;
+        AudioSensitivity = s.AudioSensitivity;
         _loading = false;
 
         _controller.SetZones(s.Zones.Select(ZoneMapping.ToZone).ToArray());
@@ -95,6 +100,8 @@ internal sealed partial class MainViewModel : ObservableObject
 
     partial void OnPickedColorChanged(Color value) => Apply();
 
+    partial void OnAudioSensitivityChanged(double value) => Apply();
+
     private void Apply()
     {
         if (!_ready || _loading)
@@ -102,6 +109,7 @@ internal sealed partial class MainViewModel : ObservableObject
             return;
         }
 
+        _controller.AudioSensitivity = AudioSensitivity;
         var rgb = new Rgb(PickedColor.R, PickedColor.G, PickedColor.B);
         _controller.SetGlobalEffect(SelectedEffect, rgb, BrightnessPercent / 100.0);
 
@@ -109,6 +117,7 @@ internal sealed partial class MainViewModel : ObservableObject
         s.GlobalEffect = SelectedEffect;
         s.GlobalColorHex = $"{PickedColor.R:X2}{PickedColor.G:X2}{PickedColor.B:X2}";
         s.BrightnessPercent = BrightnessPercent;
+        s.AudioSensitivity = AudioSensitivity;
         _settings.Save();
     }
 

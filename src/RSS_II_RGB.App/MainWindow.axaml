@@ -22,6 +22,9 @@
             <TextBlock Text="{Binding BrightnessPercent, StringFormat='Brightness: {0:0}%'}" FontWeight="SemiBold"/>
             <Slider Minimum="0" Maximum="100" Value="{Binding BrightnessPercent}" IsEnabled="{Binding IsConnected}"/>
 
+            <TextBlock Text="{Binding AudioSensitivity, StringFormat='Audio sensitivity: {0:0.0}×'}" FontWeight="SemiBold"/>
+            <Slider Minimum="0.5" Maximum="4" Value="{Binding AudioSensitivity}" IsEnabled="{Binding IsConnected}"/>
+
             <TextBlock Text="Colour" FontWeight="SemiBold"/>
             <ColorPicker Color="{Binding PickedColor}" IsEnabled="{Binding IsConnected}" HorizontalAlignment="Left"/>
             <WrapPanel Orientation="Horizontal">

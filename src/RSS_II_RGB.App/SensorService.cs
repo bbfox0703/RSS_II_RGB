@@ -65,7 +65,7 @@ internal sealed class SensorService : IAsyncDisposable
                 if (first)
                 {
                     first = false;
-                    _log.Log(LogLevel.Info, $"First sensor sample: {sample.Kind}={sample.Values.FirstOrDefault():F1}");
+                    _log.Log(LogLevel.Info, "Sensor feed connected.");
                 }
             }
         }

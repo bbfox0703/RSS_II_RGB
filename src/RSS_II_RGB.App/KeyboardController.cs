@@ -42,6 +42,9 @@ internal sealed class KeyboardController : IAsyncDisposable
     public int LayoutId { get; private set; } = -1;
     public IReadOnlyList<Zone> Zones => _zones;
 
+    /// <summary>Brightness multiplier for the audio visualiser (set before SetGlobalEffect).</summary>
+    public double AudioSensitivity { get; set; } = 1.5;
+
     public async Task<bool> StartAsync()
     {
         var factory = new Win32KeyboardDeviceFactory();
@@ -152,6 +155,9 @@ internal sealed class KeyboardController : IAsyncDisposable
                 break;
             case EffectChoice.GpuTemp:
                 layers.Add(new TempIndicatorLayer(id, _sensors, gpu: true, mask, zOrder: baseZ));
+                break;
+            case EffectChoice.Audio:
+                layers.Add(new AudioReactiveLayer(id, _sensors, mask, sensitivity: AudioSensitivity, zOrder: baseZ));
                 break;
         }
     }

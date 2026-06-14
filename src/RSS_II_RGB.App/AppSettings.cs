@@ -12,6 +12,8 @@ internal sealed class AppSettings
 
     public double BrightnessPercent { get; set; } = 100;
 
+    public double AudioSensitivity { get; set; } = 1.5;
+
     public List<ZoneSetting> Zones { get; set; } = new();
 }
 

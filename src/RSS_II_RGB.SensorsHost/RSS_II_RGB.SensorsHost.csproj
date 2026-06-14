@@ -19,4 +19,8 @@
     <ProjectReference Include="..\RSS_II_RGB.Core\RSS_II_RGB.Core.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <PackageReference Include="NAudio" Version="2.3.0" />
+  </ItemGroup>
+
 </Project>
