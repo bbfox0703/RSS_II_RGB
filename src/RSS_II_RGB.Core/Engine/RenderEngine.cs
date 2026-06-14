@@ -88,7 +88,11 @@ public sealed class RenderEngine : IAsyncDisposable
             }
             catch (Exception ex)
             {
-                _log.Log(LogLevel.Error, "WriteFrame failed.", ex);
+                // A failed write means the device is gone (unplugged). Log once and
+                // stop the loop; the controller treats the engine exit as a lost
+                // device and re-enters its detect/reconnect poll.
+                _log.Log(LogLevel.Warning, "Keyboard write failed — device likely disconnected.", ex);
+                break;
             }
 
             TimeSpan spent = clock.Elapsed - now;

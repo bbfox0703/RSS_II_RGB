@@ -40,13 +40,14 @@ reads top‑down regardless of how many zones exist:
 | 30 000 | Reactive overlay | global keypress flare + ripple (Additive) |
 | 20 000+ | Audio zones | zone spectrum/volume |
 | 10 000+ | Other zones | static zone effects |
-| 1 000 | Audio overlay | global spectrum (Additive) |
+| 1 000 | Audio overlay | global spectrum or bars (Over) |
 | 0 | Base effect | main‑UI effect over every key |
 
 Reactive and the global Audio overlay are independent main‑UI toggles, not effect
-modes — they composite **Additive** so idle/silent frames stay transparent and the
-layers below show through. Reactive outranks Audio (keypress flares win over a
-spectrum); both stay below the metric bars.
+modes. Reactive composites **Additive** (flares add light, idle frames stay
+transparent); Audio uses **`Over`** (a non‑black source replaces the base so the
+spectrum/bars stay legible even on bright effects, while black is transparent).
+Reactive outranks Audio; both stay below the metric bars.
 
 Effects in `Core/Effects/Layers`: Solid, Breathing, Rainbow, Wave (by column),
 KeypressFade, Ripple, TempIndicator, AudioReactive (spectrum), AudioVolume
@@ -68,6 +69,15 @@ Three threads:
 Effect changes are applied by swapping the compositor's layer set on the engine
 thread (a volatile "pending layers" reference), so the compositor is only ever
 mutated by one thread.
+
+**Connection lifecycle.** `KeyboardController` runs a fourth background loop that
+detects the keyboard, drives it, and reconnects after an unplug. It polls
+`FindAsync` every ~2 s while disconnected; on success it opens the device and
+starts the engine + hook. A failed frame write makes the engine log once and
+exit, which the loop treats as a lost device — it tears the engine/hook/device
+down and goes back to polling. The UI follows a `StateChanged` event. So a missing
+keyboard at launch, or a mid‑session unplug, self‑heals without a restart or log
+spam.
 
 ## Platform abstraction (CLAUDE.md rule 4)
 

@@ -33,6 +33,10 @@ to the tray (your lighting keeps running); **right‑click the tray icon → Sho
 to bring it back, or **Exit** to quit. Launching the app again simply surfaces the
 already‑running window.
 
+It **auto‑detects the keyboard**: if it isn't found at launch (or you unplug it),
+the app keeps polling and **reconnects automatically** when the keyboard is back —
+no restart needed. The status line shows whether it's connected or searching.
+
 ## Using the app
 
 - **Effect** — pick a base look for the whole keyboard: Off, Solid, Breathing,

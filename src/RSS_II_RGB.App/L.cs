@@ -71,9 +71,9 @@ internal static class L
     public static string StatusConnecting => S("Connecting…", "連線中…");
     public static string StatusConnectedFormat =>
         S("Connected — Scope II RX, firmware {0}", "已連線 — Scope II RX，韌體 {0}");
-    public static string StatusNotFound =>
-        S("Keyboard not found. Close Armoury Crate / OpenRGB, then restart.",
-          "找不到鍵盤。請先關閉 Armoury Crate / OpenRGB，再重新啟動。");
+    public static string StatusSearching =>
+        S("Searching for keyboard… (close Armoury Crate / OpenRGB)",
+          "搜尋鍵盤中…（請關閉 Armoury Crate / OpenRGB）");
 
     // ----- Tray menu -----
     public static string TrayShow => S("Show", "顯示");

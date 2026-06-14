@@ -18,13 +18,20 @@ namespace RSS_II_RGB.App;
 /// </summary>
 internal sealed class KeyboardController : IAsyncDisposable
 {
+    private static readonly TimeSpan PollInterval = TimeSpan.FromSeconds(2);
+
     private readonly ILogSink _log;
     private readonly SensorState _sensors;
     private IKeyboardDevice? _device;
     private Win32KeyboardHook? _hook;
-    private RenderEngine? _engine;
-    private CancellationTokenSource? _cts;
+    private volatile RenderEngine? _engine;
+    private CancellationTokenSource? _engineCts;
     private Task? _engineTask;
+
+    // The detect/reconnect lifecycle loop.
+    private CancellationTokenSource? _lifecycleCts;
+    private Task? _lifecycleTask;
+    private volatile bool _connected;
 
     // Composed state.
     private EffectChoice _globalEffect = EffectChoice.Rainbow;
@@ -43,6 +50,12 @@ internal sealed class KeyboardController : IAsyncDisposable
     public string Firmware { get; private set; } = "";
     public int LayoutId { get; private set; } = -1;
     public IReadOnlyList<Zone> Zones => _zones;
+
+    /// <summary>True while a keyboard is open and being driven.</summary>
+    public bool IsConnected => _connected;
+
+    /// <summary>Raised (on a background thread) whenever the connection state changes.</summary>
+    public event Action? StateChanged;
 
     /// <summary>The connected keyboard's layout profile (geometry + key map).</summary>
     public KeyboardProfile Profile => _profile;
@@ -68,33 +81,134 @@ internal sealed class KeyboardController : IAsyncDisposable
     public double[] PercentThresholds { get; set; } = { 30, 60, 90 };
     public double[] TempThresholds { get; set; } = { 55, 65, 75 };
 
-    public async Task<bool> StartAsync()
+    /// <summary>
+    /// Begin the connection lifecycle: poll for the keyboard, drive it while present,
+    /// and automatically reconnect after an unplug. Non-blocking; subscribe to
+    /// <see cref="StateChanged"/> for connect/disconnect notifications.
+    /// </summary>
+    public void Start()
+    {
+        if (_lifecycleTask is not null)
+        {
+            return;
+        }
+        IsRunning = true;
+        _lifecycleCts = new CancellationTokenSource();
+        _lifecycleTask = Task.Run(() => RunLifecycleAsync(_lifecycleCts.Token));
+    }
+
+    // Detect → drive → (on loss) tear down → wait → retry, until disposed.
+    private async Task RunLifecycleAsync(CancellationToken ct)
     {
         var factory = new Win32KeyboardDeviceFactory();
-        _device = await factory.FindAsync();
-        if (_device is null)
+
+        while (!ct.IsCancellationRequested)
         {
-            _log.Log(LogLevel.Warning, "Keyboard not found or already in use.");
-            return false;
+            IKeyboardDevice? device = null;
+            try
+            {
+                device = await factory.FindAsync(ct).ConfigureAwait(false);
+            }
+            catch (OperationCanceledException)
+            {
+                break;
+            }
+            catch (Exception ex)
+            {
+                _log.Log(LogLevel.Error, "Keyboard detection failed.", ex);
+            }
+
+            if (device is null)
+            {
+                await DelaySafe(PollInterval, ct).ConfigureAwait(false); // sleep, then re-detect
+                continue;
+            }
+
+            try
+            {
+                _device = device;
+                _profile = device.Profile;
+
+                DeviceInfo info = await device.ReadInfoAsync(ct).ConfigureAwait(false);
+                Firmware = info.FirmwareVersion;
+                LayoutId = info.LayoutId;
+
+                _engine = new RenderEngine(device, new Compositor(_profile.LedCount), _log, _profile);
+                _hook = new Win32KeyboardHook(_profile);
+                _hook.KeyChanged += OnKey;
+                await _hook.StartAsync(ct).ConfigureAwait(false);
+
+                _engineCts = new CancellationTokenSource();
+                _engineTask = Task.Run(() => _engine!.RunAsync(_engineCts.Token));
+
+                _connected = true;
+                _log.Log(LogLevel.Info, $"Connected. Firmware {Firmware}, layout {LayoutId}.");
+                Rebuild();
+                StateChanged?.Invoke();
+
+                // The engine task completes when the device is lost (write failed) or
+                // when we shut down — either way, fall through to tear down.
+                await _engineTask.ConfigureAwait(false);
+            }
+            catch (OperationCanceledException)
+            {
+            }
+            catch (Exception ex)
+            {
+                _log.Log(LogLevel.Error, "Keyboard connection failed.", ex);
+            }
+
+            await TeardownConnectionAsync().ConfigureAwait(false);
+
+            if (ct.IsCancellationRequested)
+            {
+                break;
+            }
+
+            _connected = false;
+            Firmware = "";
+            LayoutId = -1;
+            _log.Log(LogLevel.Warning, "Keyboard disconnected — searching…");
+            StateChanged?.Invoke();
+
+            await DelaySafe(PollInterval, ct).ConfigureAwait(false);
         }
 
-        _profile = _device.Profile;
+        await TeardownConnectionAsync().ConfigureAwait(false);
+        _connected = false;
+    }
 
-        DeviceInfo info = await _device.ReadInfoAsync();
-        Firmware = info.FirmwareVersion;
-        LayoutId = info.LayoutId;
+    // Stop and release the current engine/hook/device (safe to call repeatedly).
+    private async Task TeardownConnectionAsync()
+    {
+        _engineCts?.Cancel();
+        if (_engineTask is not null)
+        {
+            try { await _engineTask.ConfigureAwait(false); } catch { /* stopping */ }
+            _engineTask = null;
+        }
+        _engineCts?.Dispose();
+        _engineCts = null;
+        _engine = null;
 
-        _engine = new RenderEngine(_device, new Compositor(_profile.LedCount), _log, _profile);
-        _hook = new Win32KeyboardHook(_profile);
-        _hook.KeyChanged += OnKey;
-        await _hook.StartAsync();
+        if (_hook is not null)
+        {
+            _hook.KeyChanged -= OnKey;
+            try { await _hook.StopAsync().ConfigureAwait(false); } catch { /* stopping */ }
+            _hook = null;
+        }
 
-        _cts = new CancellationTokenSource();
-        _engineTask = Task.Run(() => _engine.RunAsync(_cts.Token));
-        IsRunning = true;
-        _log.Log(LogLevel.Info, $"Started. Firmware {Firmware}, layout {LayoutId}.");
-        Rebuild();
-        return true;
+        if (_device is not null)
+        {
+            try { await _device.DisposeAsync().ConfigureAwait(false); } catch { /* stopping */ }
+            _device = null;
+        }
+    }
+
+    private static async Task DelaySafe(TimeSpan delay, CancellationToken ct)
+    {
+        try { await Task.Delay(delay, ct).ConfigureAwait(false); }
+        catch (OperationCanceledException) { /* shutting down */ }
     }
 
     /// <summary>Set the base effect that covers every key.</summary>
@@ -124,7 +238,9 @@ internal sealed class KeyboardController : IAsyncDisposable
 
     private void Rebuild()
     {
-        if (_engine is null)
+        // Snapshot the engine: the lifecycle thread may swap or clear it on reconnect.
+        RenderEngine? engine = _engine;
+        if (engine is null)
         {
             return;
         }
@@ -198,7 +314,7 @@ internal sealed class KeyboardController : IAsyncDisposable
                                       zOrder: 1_000_000, blend: BlendMode.Multiply));
         }
 
-        _engine.SetEffectLayers(layers);
+        engine.SetEffectLayers(layers);
     }
 
     // Maps a base/zone effect choice to its layer(s), masked to the given keys.
@@ -252,27 +368,20 @@ internal sealed class KeyboardController : IAsyncDisposable
     public async ValueTask DisposeAsync()
     {
         IsRunning = false;
-        _cts?.Cancel();
-        if (_engineTask is not null)
+
+        // Stop the lifecycle loop and the current engine, then wait for it to unwind.
+        _lifecycleCts?.Cancel();
+        _engineCts?.Cancel();
+        if (_lifecycleTask is not null)
         {
-            try
-            {
-                await _engineTask.ConfigureAwait(false);
-            }
-            catch
-            {
-                // shutting down
-            }
+            try { await _lifecycleTask.ConfigureAwait(false); } catch { /* shutting down */ }
+            _lifecycleTask = null;
         }
-        if (_hook is not null)
-        {
-            await _hook.StopAsync().ConfigureAwait(false);
-        }
-        if (_device is not null)
-        {
-            await _device.DisposeAsync().ConfigureAwait(false);
-        }
-        _cts?.Dispose();
+
+        await TeardownConnectionAsync().ConfigureAwait(false);
+
+        _lifecycleCts?.Dispose();
+        _lifecycleCts = null;
         (_log as IDisposable)?.Dispose();
     }
 

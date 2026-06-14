@@ -1,5 +1,6 @@
 using System.Globalization;
 using Avalonia.Media;
+using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using RSS_II_RGB.Core.Rendering;
@@ -129,27 +130,12 @@ internal sealed partial class MainViewModel : ObservableObject
     /// <summary>The shared settings store, handed to the zone editor.</summary>
     public SettingsService Settings => _settings;
 
-    public async Task InitializeAsync()
+    public Task InitializeAsync()
     {
-        // Auto-start state is read from the registry and works whether or not the
-        // keyboard is found, so reflect it before anything else.
+        // Restore the saved setup first — it applies whether or not a keyboard is
+        // present yet; the controller reconnects on its own and re-applies it.
         _loading = true;
         StartWithWindows = _startup.IsEnabled();
-        _loading = false;
-
-        bool ok = await _controller.StartAsync();
-        IsConnected = ok;
-        StatusText = ok
-            ? string.Format(CultureInfo.InvariantCulture, L.StatusConnectedFormat, _controller.Firmware)
-            : L.StatusNotFound;
-        _ready = ok;
-        if (!ok)
-        {
-            return;
-        }
-
-        // Restore the saved setup.
-        _loading = true;
         AppSettings s = _settings.Settings;
         EnableReactive = s.EnableReactive;
         EnableAudio = s.EnableAudio;
@@ -197,10 +183,26 @@ internal sealed partial class MainViewModel : ObservableObject
             Temp3 = (decimal)s.TempThresholds[2];
         }
         _loading = false;
+        _ready = true;
 
+        // Push the restored configuration to the controller, then begin the
+        // detect/reconnect lifecycle; the status text tracks StateChanged.
         _controller.SetZones(s.Zones.Select(ZoneMapping.ToZone).ToArray());
         Apply();
+
+        _controller.StateChanged += OnControllerStateChanged;
+        StatusText = L.StatusSearching;
+        _controller.Start();
+        return Task.CompletedTask;
     }
+
+    private void OnControllerStateChanged() => Dispatcher.UIThread.Post(() =>
+    {
+        IsConnected = _controller.IsConnected;
+        StatusText = _controller.IsConnected
+            ? string.Format(CultureInfo.InvariantCulture, L.StatusConnectedFormat, _controller.Firmware)
+            : L.StatusSearching;
+    });
 
     [RelayCommand]
     private void SetColor(string hex)
