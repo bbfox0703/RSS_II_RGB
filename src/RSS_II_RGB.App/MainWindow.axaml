@@ -15,67 +15,79 @@
             <TextBlock Text="Strix Scope II RGB" FontSize="20" FontWeight="Bold"/>
             <TextBlock Text="{Binding StatusText}" TextWrapping="Wrap" Opacity="0.8"/>
 
-            <TextBlock Text="Effect" FontWeight="SemiBold"/>
+            <TextBlock Text="{x:Static vm:L.EffectLabel}" FontWeight="SemiBold"/>
             <ComboBox ItemsSource="{Binding Effects}"
                       SelectedItem="{Binding SelectedEffect}"
                       HorizontalAlignment="Stretch"
-                      IsEnabled="{Binding IsConnected}"/>
+                      IsEnabled="{Binding IsConnected}">
+                <ComboBox.ItemTemplate>
+                    <DataTemplate x:DataType="vm:EffectChoice">
+                        <TextBlock Text="{Binding Converter={x:Static vm:EnumDisplayConverter.Instance}}"/>
+                    </DataTemplate>
+                </ComboBox.ItemTemplate>
+            </ComboBox>
 
-            <TextBlock Text="Overlays" FontWeight="SemiBold"/>
-            <CheckBox Content="Reactive — keypress flare + ripple"
+            <TextBlock Text="{x:Static vm:L.OverlaysLabel}" FontWeight="SemiBold"/>
+            <CheckBox Content="{x:Static vm:L.ReactiveOverlay}"
                       IsChecked="{Binding EnableReactive}" IsEnabled="{Binding IsConnected}"/>
-            <CheckBox Content="Audio — frequency spectrum"
+            <CheckBox Content="{x:Static vm:L.AudioOverlay}"
                       IsChecked="{Binding EnableAudio}" IsEnabled="{Binding IsConnected}"/>
-            <TextBlock Text="Reactive sits above audio; system metrics sit above both."
+            <TextBlock Text="{x:Static vm:L.PriorityHint}"
                        Opacity="0.6" TextWrapping="Wrap"/>
 
-            <TextBlock Text="{Binding BrightnessPercent, StringFormat='Brightness: {0:0}%'}" FontWeight="SemiBold"/>
+            <TextBlock Text="{Binding BrightnessText}" FontWeight="SemiBold"/>
             <Slider Minimum="0" Maximum="100" Value="{Binding BrightnessPercent}" IsEnabled="{Binding IsConnected}"/>
 
-            <TextBlock Text="{Binding AudioSensitivity, StringFormat='Audio sensitivity: {0:0.0}×'}" FontWeight="SemiBold"/>
+            <TextBlock Text="{Binding AudioSensitivityText}" FontWeight="SemiBold"/>
             <Slider Minimum="0.5" Maximum="4" Value="{Binding AudioSensitivity}" IsEnabled="{Binding IsConnected}"/>
 
-            <TextBlock Text="Colour" FontWeight="SemiBold"/>
+            <TextBlock Text="{x:Static vm:L.ColourLabel}" FontWeight="SemiBold"/>
             <ColorPicker Color="{Binding PickedColor}" IsEnabled="{Binding IsConnected}" HorizontalAlignment="Left"/>
             <WrapPanel Orientation="Horizontal">
-                <Button Content="Red"     Command="{Binding SetColorCommand}" CommandParameter="FF0000" Margin="0,0,6,6"/>
-                <Button Content="Green"   Command="{Binding SetColorCommand}" CommandParameter="00FF00" Margin="0,0,6,6"/>
-                <Button Content="Blue"    Command="{Binding SetColorCommand}" CommandParameter="0066FF" Margin="0,0,6,6"/>
-                <Button Content="Cyan"    Command="{Binding SetColorCommand}" CommandParameter="00FF66" Margin="0,0,6,6"/>
-                <Button Content="Magenta" Command="{Binding SetColorCommand}" CommandParameter="FF00FF" Margin="0,0,6,6"/>
-                <Button Content="White"   Command="{Binding SetColorCommand}" CommandParameter="FFFFFF" Margin="0,0,6,6"/>
+                <Button Content="{x:Static vm:L.ColorRed}"     Command="{Binding SetColorCommand}" CommandParameter="FF0000" Margin="0,0,6,6"/>
+                <Button Content="{x:Static vm:L.ColorGreen}"   Command="{Binding SetColorCommand}" CommandParameter="00FF00" Margin="0,0,6,6"/>
+                <Button Content="{x:Static vm:L.ColorBlue}"    Command="{Binding SetColorCommand}" CommandParameter="0066FF" Margin="0,0,6,6"/>
+                <Button Content="{x:Static vm:L.ColorCyan}"    Command="{Binding SetColorCommand}" CommandParameter="00FF66" Margin="0,0,6,6"/>
+                <Button Content="{x:Static vm:L.ColorMagenta}" Command="{Binding SetColorCommand}" CommandParameter="FF00FF" Margin="0,0,6,6"/>
+                <Button Content="{x:Static vm:L.ColorWhite}"   Command="{Binding SetColorCommand}" CommandParameter="FFFFFF" Margin="0,0,6,6"/>
             </WrapPanel>
 
-            <Button Content="Zone editor…" Click="OnOpenZoneEditor"
+            <Button Content="{x:Static vm:L.ZoneEditorButton}" Click="OnOpenZoneEditor"
                     IsEnabled="{Binding IsConnected}" HorizontalAlignment="Left"/>
 
-            <CheckBox Content="Start with Windows (minimised to tray)"
+            <CheckBox Content="{x:Static vm:L.StartWithWindows}"
                       IsChecked="{Binding StartWithWindows}"/>
 
-            <Expander Header="System metrics (overlay)" IsEnabled="{Binding IsConnected}">
+            <Expander Header="{x:Static vm:L.SystemMetricsHeader}" IsEnabled="{Binding IsConnected}">
                 <StackPanel Spacing="8" Margin="0,8,0,0">
-                    <CheckBox Content="Show metric bars on the keyboard" IsChecked="{Binding ShowMetrics}"/>
-                    <TextBlock Text="Layout" FontWeight="SemiBold"/>
+                    <CheckBox Content="{x:Static vm:L.ShowMetricBars}" IsChecked="{Binding ShowMetrics}"/>
+                    <TextBlock Text="{x:Static vm:L.LayoutLabel}" FontWeight="SemiBold"/>
                     <ComboBox ItemsSource="{Binding MetricLayoutOptions}" SelectedItem="{Binding MetricLayout}"
-                              HorizontalAlignment="Stretch"/>
-                    <TextBlock Text="Utilisation % thresholds (→ 1 / 2 / 3 / 4 cells)" FontWeight="SemiBold"/>
+                              HorizontalAlignment="Stretch">
+                        <ComboBox.ItemTemplate>
+                            <DataTemplate x:DataType="vm:MetricLayoutChoice">
+                                <TextBlock Text="{Binding Converter={x:Static vm:EnumDisplayConverter.Instance}}"/>
+                            </DataTemplate>
+                        </ComboBox.ItemTemplate>
+                    </ComboBox>
+                    <TextBlock Text="{x:Static vm:L.UtilisationThresholds}" FontWeight="SemiBold"/>
                     <StackPanel Orientation="Horizontal" Spacing="8">
                         <NumericUpDown Value="{Binding Pct1}" Minimum="0" Maximum="100" Width="130"/>
                         <NumericUpDown Value="{Binding Pct2}" Minimum="0" Maximum="100" Width="130"/>
                         <NumericUpDown Value="{Binding Pct3}" Minimum="0" Maximum="100" Width="130"/>
                     </StackPanel>
-                    <TextBlock Text="GPU temperature °C thresholds" FontWeight="SemiBold"/>
+                    <TextBlock Text="{x:Static vm:L.GpuTempThresholds}" FontWeight="SemiBold"/>
                     <StackPanel Orientation="Horizontal" Spacing="8">
                         <NumericUpDown Value="{Binding Temp1}" Minimum="0" Maximum="120" Width="130"/>
                         <NumericUpDown Value="{Binding Temp2}" Minimum="0" Maximum="120" Width="130"/>
                         <NumericUpDown Value="{Binding Temp3}" Minimum="0" Maximum="120" Width="130"/>
                     </StackPanel>
-                    <TextBlock Text="CPU%→first group, Mem%→second, GPU%→third, GPU temp→last."
+                    <TextBlock Text="{x:Static vm:L.MetricMappingHint}"
                                Opacity="0.6" TextWrapping="Wrap"/>
                 </StackPanel>
             </Expander>
 
-            <TextBlock Text="Tip: tick 'Reactive' and type — each key flares and ripples on top of your effect."
+            <TextBlock Text="{x:Static vm:L.MainTip}"
                        Opacity="0.6" TextWrapping="Wrap"/>
         </StackPanel>
     </ScrollViewer>

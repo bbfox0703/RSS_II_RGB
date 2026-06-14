@@ -5,7 +5,7 @@
         x:Class="RSS_II_RGB.App.ZoneEditorWindow"
         x:DataType="vm:ZoneEditorViewModel"
         Icon="/Assets/Mainicon.ico"
-        Title="Zone Editor"
+        Title="{x:Static vm:L.ZoneEditorTitle}"
         SizeToContent="WidthAndHeight"
         WindowStartupLocation="CenterOwner">
 
@@ -57,19 +57,31 @@
             <!-- Controls -->
             <StackPanel DockPanel.Dock="Bottom" Spacing="8" Margin="0,16,0,0">
                 <WrapPanel>
-                    <TextBlock Text="Zone effect" VerticalAlignment="Center" Margin="0,0,6,6"/>
-                    <ComboBox ItemsSource="{Binding ZoneEffects}" SelectedItem="{Binding ZoneEffect}" Width="120" Margin="0,0,14,6"/>
+                    <TextBlock Text="{x:Static vm:L.ZoneEffectLabel}" VerticalAlignment="Center" Margin="0,0,6,6"/>
+                    <ComboBox ItemsSource="{Binding ZoneEffects}" SelectedItem="{Binding ZoneEffect}" Width="120" Margin="0,0,14,6">
+                        <ComboBox.ItemTemplate>
+                            <DataTemplate x:DataType="vm:EffectChoice">
+                                <TextBlock Text="{Binding Converter={x:Static vm:EnumDisplayConverter.Instance}}"/>
+                            </DataTemplate>
+                        </ComboBox.ItemTemplate>
+                    </ComboBox>
                     <ComboBox ItemsSource="{Binding AudioModeOptions}" SelectedItem="{Binding SelectedAudioMode}"
                               Width="130" Margin="0,0,14,6" IsVisible="{Binding IsAudioMode}"
-                              ToolTip.Tip="Audio zone mode"/>
-                    <TextBlock Text="Colour" VerticalAlignment="Center" Margin="0,0,6,6"/>
+                              ToolTip.Tip="{x:Static vm:L.AudioZoneModeTooltip}">
+                        <ComboBox.ItemTemplate>
+                            <DataTemplate x:DataType="vm:AudioZoneMode">
+                                <TextBlock Text="{Binding Converter={x:Static vm:EnumDisplayConverter.Instance}}"/>
+                            </DataTemplate>
+                        </ComboBox.ItemTemplate>
+                    </ComboBox>
+                    <TextBlock Text="{x:Static vm:L.ColourLabel}" VerticalAlignment="Center" Margin="0,0,6,6"/>
                     <ColorPicker Color="{Binding ZoneColor}" Margin="0,0,14,6"/>
-                    <Button Content="Assign to selection" Command="{Binding AssignZoneCommand}" Margin="0,0,6,6"/>
-                    <Button Content="Select all" Command="{Binding SelectAllCommand}" Margin="0,0,6,6"/>
-                    <Button Content="Clear selection" Command="{Binding SelectNoneCommand}" Margin="0,0,6,6"/>
-                    <Button Content="Remove all zones" Command="{Binding ClearZonesCommand}" Margin="0,0,0,6"/>
+                    <Button Content="{x:Static vm:L.AssignToSelection}" Command="{Binding AssignZoneCommand}" Margin="0,0,6,6"/>
+                    <Button Content="{x:Static vm:L.SelectAll}" Command="{Binding SelectAllCommand}" Margin="0,0,6,6"/>
+                    <Button Content="{x:Static vm:L.ClearSelection}" Command="{Binding SelectNoneCommand}" Margin="0,0,6,6"/>
+                    <Button Content="{x:Static vm:L.RemoveAllZones}" Command="{Binding ClearZonesCommand}" Margin="0,0,0,6"/>
                 </WrapPanel>
-                <TextBlock Text="Click keys to toggle, or drag a box to select a range. Then pick an effect + colour and Assign."
+                <TextBlock Text="{x:Static vm:L.ZoneEditorHint}"
                            Opacity="0.6" TextWrapping="Wrap"/>
             </StackPanel>
 
@@ -79,7 +91,7 @@
         <Border Grid.Column="1" Margin="14,0,0,0"
                 BorderBrush="#33888888" BorderThickness="1" CornerRadius="4" Padding="10">
             <StackPanel>
-                <TextBlock Text="Zones" FontWeight="SemiBold" Margin="0,0,0,8"/>
+                <TextBlock Text="{x:Static vm:L.ZonesHeader}" FontWeight="SemiBold" Margin="0,0,0,8"/>
                 <ItemsControl ItemsSource="{Binding ZoneRows}">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate x:DataType="vm:ZoneRowVM">

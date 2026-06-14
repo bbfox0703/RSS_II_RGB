@@ -20,7 +20,11 @@ internal sealed partial class MainViewModel : ObservableObject
     private bool _loading;
 
     [ObservableProperty]
-    private string _statusText = "Connecting…";
+    private string _statusText = L.StatusConnecting;
+
+    /// <summary>Localized, formatted labels for the sliders.</summary>
+    public string BrightnessText => string.Format(CultureInfo.InvariantCulture, L.BrightnessFormat, BrightnessPercent);
+    public string AudioSensitivityText => string.Format(CultureInfo.InvariantCulture, L.AudioSensitivityFormat, AudioSensitivity);
 
     [ObservableProperty]
     private bool _isConnected;
@@ -108,8 +112,8 @@ internal sealed partial class MainViewModel : ObservableObject
         bool ok = await _controller.StartAsync();
         IsConnected = ok;
         StatusText = ok
-            ? $"Connected — Scope II RX, firmware {_controller.Firmware}"
-            : "Keyboard not found. Close Armoury Crate / OpenRGB, then restart.";
+            ? string.Format(CultureInfo.InvariantCulture, L.StatusConnectedFormat, _controller.Firmware)
+            : L.StatusNotFound;
         _ready = ok;
         if (!ok)
         {
@@ -196,11 +200,19 @@ internal sealed partial class MainViewModel : ObservableObject
         }
     }
 
-    partial void OnBrightnessPercentChanged(double value) => Apply();
+    partial void OnBrightnessPercentChanged(double value)
+    {
+        OnPropertyChanged(nameof(BrightnessText));
+        Apply();
+    }
 
     partial void OnPickedColorChanged(Color value) => Apply();
 
-    partial void OnAudioSensitivityChanged(double value) => Apply();
+    partial void OnAudioSensitivityChanged(double value)
+    {
+        OnPropertyChanged(nameof(AudioSensitivityText));
+        Apply();
+    }
 
     partial void OnShowMetricsChanged(bool value) => Apply();
     partial void OnMetricLayoutChanged(MetricLayoutChoice value) => Apply();

@@ -27,7 +27,7 @@ Strix Scope II RGB display.
 
 ## Mandatory rules
 
-1. **Language**: code, comments, UI strings in English. 
+1. **Language**: code, comments, and source UI strings in English. UI is localized at runtime (English + Traditional Chinese) from the OS display language — strings in `App/L.cs`, language picked via `Core/Localization`.
 2. **Single instance**: UI uses a Mutex.
 3. **Async everywhere**: all I/O, IPC, alerts are async.
 4. **Platform abstraction**: any OS-specific call (P/Invoke, registry, OS commands) goes through an interface in the `Core` project. `Core` itself contains no platform-specific code.

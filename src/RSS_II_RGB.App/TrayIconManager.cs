@@ -64,10 +64,10 @@ internal sealed class TrayIconManager : IDisposable
 
     private NativeMenu BuildMenu()
     {
-        var show = new NativeMenuItem("Show");
+        var show = new NativeMenuItem(L.TrayShow);
         show.Click += (_, _) => ShowWindow();
 
-        var exit = new NativeMenuItem("Exit");
+        var exit = new NativeMenuItem(L.TrayExit);
         exit.Click += (_, _) => Exit();
 
         return new NativeMenu { Items = { show, new NativeMenuItemSeparator(), exit } };

@@ -51,6 +51,9 @@ already‑running window.
 
 Everything you set is **saved** and restored next launch.
 
+The interface language follows Windows: a **Traditional Chinese** display language
+shows a Chinese UI, otherwise English.
+
 ### Display priority
 
 When more than one thing wants the same key, a fixed top‑to‑bottom order decides

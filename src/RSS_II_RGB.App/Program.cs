@@ -1,4 +1,5 @@
 using Avalonia;
+using RSS_II_RGB.Windows;
 
 namespace RSS_II_RGB.App;
 
@@ -9,6 +10,10 @@ internal static class Program
     [STAThread]
     public static int Main(string[] args)
     {
+        // Pick the UI language from the OS before any window loads (Traditional
+        // Chinese OS → Traditional Chinese UI, otherwise English).
+        L.Language = new Win32UiLanguageProvider().Detect();
+
         using var mutex = new Mutex(initiallyOwned: true, AppConstants.SingleInstanceMutexName, out bool createdNew);
         if (!createdNew)
         {

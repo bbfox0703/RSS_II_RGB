@@ -143,8 +143,10 @@ internal sealed partial class ZoneEditorViewModel : ObservableObject
 
     private void AddRow(Zone zone)
     {
-        string label = zone.Effect == EffectChoice.Audio ? $"Audio · {zone.AudioMode}" : zone.Effect.ToString();
-        ZoneRows.Add(new ZoneRowVM($"{label} on {zone.KeyIndices.Count} key(s)", RemoveRow));
+        string label = zone.Effect == EffectChoice.Audio
+            ? $"{L.EffectName(EffectChoice.Audio)} · {L.AudioModeName(zone.AudioMode)}"
+            : L.EffectName(zone.Effect);
+        ZoneRows.Add(new ZoneRowVM(L.ZoneSummary(label, zone.KeyIndices.Count), RemoveRow));
     }
 
     private void RemoveRow(ZoneRowVM row)
