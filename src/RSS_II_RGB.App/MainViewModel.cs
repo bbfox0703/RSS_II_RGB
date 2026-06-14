@@ -31,7 +31,7 @@ internal sealed partial class MainViewModel : ObservableObject
 
     // Audio visualiser brightness multiplier (1 = raw, higher fills the keyboard more).
     [ObservableProperty]
-    private double _audioSensitivity = 1.5;
+    private double _audioSensitivity = 0.9;
 
     // System-metric overlay.
     [ObservableProperty]
@@ -66,7 +66,7 @@ internal sealed partial class MainViewModel : ObservableObject
     {
         EffectChoice.Off, EffectChoice.Solid, EffectChoice.Breathing,
         EffectChoice.Rainbow, EffectChoice.Wave, EffectChoice.Reactive,
-        EffectChoice.CpuTemp, EffectChoice.GpuTemp, EffectChoice.Audio,
+        EffectChoice.Audio,
     };
 
     public MainViewModel(KeyboardController controller, SettingsService settings)
@@ -97,7 +97,10 @@ internal sealed partial class MainViewModel : ObservableObject
         // Restore the saved setup.
         _loading = true;
         AppSettings s = _settings.Settings;
-        SelectedEffect = s.GlobalEffect;
+        // CpuTemp/GpuTemp were removed as global effects; fall back if one was saved.
+        SelectedEffect = s.GlobalEffect is EffectChoice.CpuTemp or EffectChoice.GpuTemp
+            ? EffectChoice.Rainbow
+            : s.GlobalEffect;
         if (TryParseColor(s.GlobalColorHex, out Color color))
         {
             PickedColor = color;

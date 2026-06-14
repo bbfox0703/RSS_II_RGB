@@ -12,7 +12,7 @@ internal sealed class AppSettings
 
     public double BrightnessPercent { get; set; } = 100;
 
-    public double AudioSensitivity { get; set; } = 1.5;
+    public double AudioSensitivity { get; set; } = 0.9;
 
     // System-metric overlay.
     public bool ShowMetrics { get; set; }

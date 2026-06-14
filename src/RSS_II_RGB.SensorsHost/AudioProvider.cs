@@ -20,10 +20,13 @@ internal sealed class AudioProvider : ISensorProvider
     private const double SilenceRms = 0.002; // overall loudness below this = black (no flicker)
     private const double PeakFloor = 0.02;   // per-band gain floor
     private const double PeakDecay = 0.99;   // adaptive-gain decay per FFT frame
+    private const double Attack = 0.55;      // temporal smoothing on a rising band (higher = calmer)
+    private const double Release = 0.9;      // temporal smoothing on a falling band (~0.45s fade-out)
 
     private readonly object _gate = new();
     private readonly float[] _accum = new float[FftSize];
-    private readonly double[] _peaks = new double[BandCount]; // per-band adaptive peak
+    private readonly double[] _peaks = new double[BandCount];    // per-band adaptive peak
+    private readonly double[] _smoothed = new double[BandCount]; // temporally smoothed output
     private double[] _bands = new double[BandCount];
     private int _accumPos;
     private int _sampleRate = 48000;
@@ -104,61 +107,70 @@ internal sealed class AudioProvider : ISensorProvider
         double rms = Math.Sqrt(energy / FftSize);
         if (rms < SilenceRms)
         {
+            // Silent: target stays 0 (the smoothing below fades the bands out), and the
+            // per-band gains decay.
             for (int b = 0; b < BandCount; b++)
             {
                 _peaks[b] = Math.Max(_peaks[b] * PeakDecay, PeakFloor);
             }
-            lock (_gate)
-            {
-                _bands = bands;
-            }
-            return;
         }
-
-        var buffer = new Complex[FftSize];
-        for (int i = 0; i < FftSize; i++)
+        else
         {
-            double window = 0.5 * (1 - Math.Cos(2 * Math.PI * i / (FftSize - 1))); // Hann
-            buffer[i].X = (float)(_accum[i] * window);
-            buffer[i].Y = 0;
-        }
-        FastFourierTransform.FFT(true, FftPow, buffer);
+            var buffer = new Complex[FftSize];
+            for (int i = 0; i < FftSize; i++)
+            {
+                double window = 0.5 * (1 - Math.Cos(2 * Math.PI * i / (FftSize - 1))); // Hann
+                buffer[i].X = (float)(_accum[i] * window);
+                buffer[i].Y = 0;
+            }
+            FastFourierTransform.FFT(true, FftPow, buffer);
 
-        int half = FftSize / 2;
-        double binHz = _sampleRate / (double)FftSize;
-        double ratio = FMaxHz / FMinHz;
+            int half = FftSize / 2;
+            double binHz = _sampleRate / (double)FftSize;
+            double ratio = FMaxHz / FMinHz;
+            for (int b = 0; b < BandCount; b++)
+            {
+                // Logarithmic (constant-ratio, octave-like) band edges so bass, mid and
+                // treble each get a fair share of the keyboard width.
+                double freqLo = FMinHz * Math.Pow(ratio, (double)b / BandCount);
+                double freqHi = FMinHz * Math.Pow(ratio, (double)(b + 1) / BandCount);
+                int lo = Math.Max(1, (int)(freqLo / binHz));
+                int hi = Math.Min(half - 1, (int)(freqHi / binHz));
+                if (hi < lo)
+                {
+                    hi = lo;
+                }
+
+                double sum = 0;
+                int count = 0;
+                for (int k = lo; k <= hi; k++)
+                {
+                    sum += Math.Sqrt(buffer[k].X * buffer[k].X + buffer[k].Y * buffer[k].Y);
+                    count++;
+                }
+
+                double mag = count > 0 ? sum / count : 0;
+
+                // Per-band auto-gain: each band fills its own range, so the whole keyboard
+                // responds even though treble carries far less energy than bass.
+                _peaks[b] = Math.Max(Math.Max(_peaks[b] * PeakDecay, mag), PeakFloor);
+                bands[b] = Math.Clamp(Math.Pow(mag / _peaks[b], 0.7), 0, 1); // normalise + mild gamma
+            }
+        }
+
+        // Temporal smoothing (fast attack, slow release): kills per-frame flicker and
+        // gives a smooth fade-out when the sound drops.
+        var emit = new double[BandCount];
         for (int b = 0; b < BandCount; b++)
         {
-            // Logarithmic (constant-ratio, octave-like) band edges so bass, mid and
-            // treble each get a fair share of the keyboard width.
-            double freqLo = FMinHz * Math.Pow(ratio, (double)b / BandCount);
-            double freqHi = FMinHz * Math.Pow(ratio, (double)(b + 1) / BandCount);
-            int lo = Math.Max(1, (int)(freqLo / binHz));
-            int hi = Math.Min(half - 1, (int)(freqHi / binHz));
-            if (hi < lo)
-            {
-                hi = lo;
-            }
-
-            double sum = 0;
-            int count = 0;
-            for (int k = lo; k <= hi; k++)
-            {
-                sum += Math.Sqrt(buffer[k].X * buffer[k].X + buffer[k].Y * buffer[k].Y);
-                count++;
-            }
-
-            double mag = count > 0 ? sum / count : 0;
-
-            // Per-band auto-gain: each band fills its own range, so the whole keyboard
-            // responds even though treble carries far less energy than bass.
-            _peaks[b] = Math.Max(Math.Max(_peaks[b] * PeakDecay, mag), PeakFloor);
-            bands[b] = Math.Clamp(Math.Pow(mag / _peaks[b], 0.7), 0, 1); // normalise + mild gamma
+            double factor = bands[b] > _smoothed[b] ? Attack : Release;
+            _smoothed[b] = _smoothed[b] * factor + bands[b] * (1 - factor);
+            emit[b] = _smoothed[b];
         }
 
         lock (_gate)
         {
-            _bands = bands;
+            _bands = emit;
         }
     }
 

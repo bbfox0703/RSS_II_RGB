@@ -43,7 +43,7 @@ internal sealed class KeyboardController : IAsyncDisposable
     public IReadOnlyList<Zone> Zones => _zones;
 
     /// <summary>Brightness multiplier for the audio visualiser (set before SetGlobalEffect).</summary>
-    public double AudioSensitivity { get; set; } = 1.5;
+    public double AudioSensitivity { get; set; } = 0.9;
 
     // System-metric overlay configuration (set before SetGlobalEffect/SetZones).
     public bool ShowMetrics { get; set; }
