@@ -103,8 +103,9 @@ dotnet publish src/RSS_II_RGB.App -r win-x64 -c Release
 
 Requires the **.NET 10 SDK**. The build also compiles the `SensorsHost` helper and
 copies it into a `sensorshost\` subfolder next to the app, where the app launches
-it from. CI builds and tests every push; pushing a `vX.Y.Z` tag publishes a
-release zip automatically (see [`.github/workflows`](.github/workflows)).
+it from. CI runs only when you push a `vX.Y.Z` tag: it builds, tests, and — if
+those pass — publishes a release zip automatically (see
+[`.github/workflows`](.github/workflows)). Normal pushes/merges don't trigger it.
 
 ### Solution layout
 
