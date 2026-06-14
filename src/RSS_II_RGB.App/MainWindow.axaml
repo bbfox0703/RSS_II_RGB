@@ -49,6 +49,9 @@
             <Button Content="Zone editor…" Click="OnOpenZoneEditor"
                     IsEnabled="{Binding IsConnected}" HorizontalAlignment="Left"/>
 
+            <CheckBox Content="Start with Windows (minimised to tray)"
+                      IsChecked="{Binding StartWithWindows}"/>
+
             <Expander Header="System metrics (overlay)" IsEnabled="{Binding IsConnected}">
                 <StackPanel Spacing="8" Margin="0,8,0,0">
                     <CheckBox Content="Show metric bars on the keyboard" IsChecked="{Binding ShowMetrics}"/>

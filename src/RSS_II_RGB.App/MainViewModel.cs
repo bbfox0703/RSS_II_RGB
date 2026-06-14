@@ -3,6 +3,7 @@ using Avalonia.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using RSS_II_RGB.Core.Rendering;
+using RSS_II_RGB.Core.Startup;
 
 namespace RSS_II_RGB.App;
 
@@ -14,6 +15,7 @@ internal sealed partial class MainViewModel : ObservableObject
 {
     private readonly KeyboardController _controller;
     private readonly SettingsService _settings;
+    private readonly IStartupManager _startup;
     private bool _ready;
     private bool _loading;
 
@@ -22,6 +24,11 @@ internal sealed partial class MainViewModel : ObservableObject
 
     [ObservableProperty]
     private bool _isConnected;
+
+    // Launch with Windows, registered to start minimised in the tray. The registry
+    // is the source of truth, so this isn't part of the saved settings.
+    [ObservableProperty]
+    private bool _startWithWindows;
 
     [ObservableProperty]
     private EffectChoice _selectedEffect = EffectChoice.Rainbow;
@@ -77,10 +84,11 @@ internal sealed partial class MainViewModel : ObservableObject
         EffectChoice.Rainbow, EffectChoice.Wave,
     };
 
-    public MainViewModel(KeyboardController controller, SettingsService settings)
+    public MainViewModel(KeyboardController controller, SettingsService settings, IStartupManager startup)
     {
         _controller = controller;
         _settings = settings;
+        _startup = startup;
     }
 
     /// <summary>The shared controller, handed to the zone editor.</summary>
@@ -91,6 +99,12 @@ internal sealed partial class MainViewModel : ObservableObject
 
     public async Task InitializeAsync()
     {
+        // Auto-start state is read from the registry and works whether or not the
+        // keyboard is found, so reflect it before anything else.
+        _loading = true;
+        StartWithWindows = _startup.IsEnabled();
+        _loading = false;
+
         bool ok = await _controller.StartAsync();
         IsConnected = ok;
         StatusText = ok
@@ -166,6 +180,21 @@ internal sealed partial class MainViewModel : ObservableObject
     partial void OnEnableReactiveChanged(bool value) => Apply();
 
     partial void OnEnableAudioChanged(bool value) => Apply();
+
+    partial void OnStartWithWindowsChanged(bool value)
+    {
+        if (_loading)
+        {
+            return;
+        }
+        _startup.SetEnabled(value);
+        // Reflect the real registry state in case the write was blocked.
+        bool actual = _startup.IsEnabled();
+        if (actual != value)
+        {
+            StartWithWindows = actual;
+        }
+    }
 
     partial void OnBrightnessPercentChanged(double value) => Apply();
 

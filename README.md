@@ -45,6 +45,9 @@ already‑running window.
   cells (green→red) on a chosen key group. **No administrator rights needed.**
 - **Zone editor** — select keys (click or drag a box) and give them their own
   effect or audio mode, layered on top of the global effect.
+- **Start with Windows** — tick this to launch the app automatically when you log
+  in; it comes up **minimised to the tray** so your lighting is on from boot.
+  (Per-user registry Run key — no admin rights needed.)
 
 Everything you set is **saved** and restored next launch.
 

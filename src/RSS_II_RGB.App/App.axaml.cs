@@ -23,15 +23,19 @@ public partial class App : Application
             _sensorService = new SensorService(sensors, log);
             _controller = new KeyboardController(log, sensors);
             var settings = new SettingsService();
-            var viewModel = new MainViewModel(_controller, settings);
+            var startup = new Win32StartupManager(AppConstants.StartupRegistryValueName, AppConstants.StartMinimizedArg);
+            var viewModel = new MainViewModel(_controller, settings, startup);
 
             var mainWindow = new MainWindow { DataContext = viewModel };
             desktop.MainWindow = mainWindow;
             desktop.ShutdownRequested += OnShutdownRequested;
 
+            // Launched by auto-start? Come up hidden in the tray.
+            bool startHidden = desktop.Args is { } args && args.Contains(AppConstants.StartMinimizedArg);
+
             // Keep running in the tray when the window is closed/minimised.
             _tray = new TrayIconManager(desktop, mainWindow);
-            _tray.Initialize();
+            _tray.Initialize(startHidden);
 
             _ = viewModel.InitializeAsync();
             _sensorService.Start();

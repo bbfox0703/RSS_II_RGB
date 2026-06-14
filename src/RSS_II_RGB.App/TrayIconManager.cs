@@ -30,7 +30,7 @@ internal sealed class TrayIconManager : IDisposable
         _window = window;
     }
 
-    public void Initialize()
+    public void Initialize(bool startHidden = false)
     {
         // We own shutdown: hiding the window must not quit the app.
         _desktop.ShutdownMode = ShutdownMode.OnExplicitShutdown;
@@ -47,7 +47,19 @@ internal sealed class TrayIconManager : IDisposable
         _window.Closing += OnClosing;
         _window.PropertyChanged += OnWindowPropertyChanged;
 
+        // Auto-started minimised: hide to the tray as soon as the window opens.
+        if (startHidden)
+        {
+            _window.Opened += OnFirstOpened;
+        }
+
         StartActivationListener();
+    }
+
+    private void OnFirstOpened(object? sender, EventArgs e)
+    {
+        _window.Opened -= OnFirstOpened;
+        _window.Hide();
     }
 
     private NativeMenu BuildMenu()
