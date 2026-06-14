@@ -40,6 +40,9 @@ internal sealed partial class MainViewModel : ObservableObject
 
     public MainViewModel(KeyboardController controller) => _controller = controller;
 
+    /// <summary>The shared controller, handed to the zone editor.</summary>
+    public KeyboardController Controller => _controller;
+
     public async Task InitializeAsync()
     {
         bool ok = await _controller.StartAsync();
@@ -76,7 +79,7 @@ internal sealed partial class MainViewModel : ObservableObject
             return;
         }
         var rgb = new Rgb(PickedColor.R, PickedColor.G, PickedColor.B);
-        _controller.ApplyEffect(SelectedEffect, rgb, BrightnessPercent / 100.0);
+        _controller.SetGlobalEffect(SelectedEffect, rgb, BrightnessPercent / 100.0);
     }
 
     private static bool TryParseColor(string s, out Color color)

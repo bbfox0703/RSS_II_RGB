@@ -4,5 +4,7 @@
              RequestedThemeVariant="Default">
     <Application.Styles>
         <FluentTheme />
+        <!-- ColorPicker controls ship their own theme; FluentTheme doesn't include it. -->
+        <StyleInclude Source="avares://Avalonia.Controls.ColorPicker/Themes/Fluent/Fluent.xaml"/>
     </Application.Styles>
 </Application>

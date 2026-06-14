@@ -1,0 +1,90 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:RSS_II_RGB.App"
+        xmlns:sys="using:System"
+        x:Class="RSS_II_RGB.App.ZoneEditorWindow"
+        x:DataType="vm:ZoneEditorViewModel"
+        Title="Zone Editor"
+        SizeToContent="WidthAndHeight"
+        WindowStartupLocation="CenterOwner">
+
+    <Grid ColumnDefinitions="*,200" Margin="16">
+
+        <DockPanel Grid.Column="0" LastChildFill="False">
+
+            <!-- Visual keyboard (frame hugs the keys) -->
+            <Border DockPanel.Dock="Top" HorizontalAlignment="Left"
+                    BorderBrush="#33888888" BorderThickness="1" CornerRadius="4" Padding="10">
+                <Grid x:Name="KeyboardHost" Background="Transparent"
+                      Width="{Binding HostWidth}" Height="{Binding HostHeight}"
+                      PointerPressed="OnKeyboardPointerPressed"
+                      PointerMoved="OnKeyboardPointerMoved"
+                      PointerReleased="OnKeyboardPointerReleased">
+                    <ItemsControl ItemsSource="{Binding Keys}"
+                                  Width="{Binding CanvasWidth}" Height="{Binding CanvasHeight}"
+                                  Margin="{Binding KeysMargin}"
+                                  HorizontalAlignment="Left" VerticalAlignment="Top">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <Canvas/>
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.Styles>
+                            <Style Selector="ContentPresenter" x:DataType="vm:KeyVM">
+                                <Setter Property="Canvas.Left" Value="{Binding X}"/>
+                                <Setter Property="Canvas.Top" Value="{Binding Y}"/>
+                            </Style>
+                        </ItemsControl.Styles>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="vm:KeyVM">
+                                <ToggleButton IsChecked="{Binding IsSelected}"
+                                              Width="28" Height="28" Padding="0"
+                                              FontSize="9"
+                                              Content="{Binding ShortLabel}"
+                                              ToolTip.Tip="{Binding Name}"/>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+
+                    <!-- Rubber-band selection overlay -->
+                    <Rectangle x:Name="SelectionRect" IsHitTestVisible="False" IsVisible="False"
+                               HorizontalAlignment="Left" VerticalAlignment="Top"
+                               Fill="#3300AAFF" Stroke="#AA00AAFF" StrokeThickness="1"/>
+                </Grid>
+            </Border>
+
+            <!-- Controls -->
+            <StackPanel DockPanel.Dock="Bottom" Spacing="8" Margin="0,16,0,0">
+                <WrapPanel>
+                    <TextBlock Text="Zone effect" VerticalAlignment="Center" Margin="0,0,6,6"/>
+                    <ComboBox ItemsSource="{Binding ZoneEffects}" SelectedItem="{Binding ZoneEffect}" Width="120" Margin="0,0,14,6"/>
+                    <TextBlock Text="Colour" VerticalAlignment="Center" Margin="0,0,6,6"/>
+                    <ColorPicker Color="{Binding ZoneColor}" Margin="0,0,14,6"/>
+                    <Button Content="Assign to selection" Command="{Binding AssignZoneCommand}" Margin="0,0,6,6"/>
+                    <Button Content="Select all" Command="{Binding SelectAllCommand}" Margin="0,0,6,6"/>
+                    <Button Content="Clear selection" Command="{Binding SelectNoneCommand}" Margin="0,0,6,6"/>
+                    <Button Content="Remove all zones" Command="{Binding ClearZonesCommand}" Margin="0,0,0,6"/>
+                </WrapPanel>
+                <TextBlock Text="Click keys to toggle, or drag a box to select a range. Then pick an effect + colour and Assign."
+                           Opacity="0.6" TextWrapping="Wrap"/>
+            </StackPanel>
+
+        </DockPanel>
+
+        <!-- Zones list -->
+        <Border Grid.Column="1" Margin="14,0,0,0"
+                BorderBrush="#33888888" BorderThickness="1" CornerRadius="4" Padding="10">
+            <StackPanel>
+                <TextBlock Text="Zones" FontWeight="SemiBold" Margin="0,0,0,8"/>
+                <ItemsControl ItemsSource="{Binding ZoneSummaries}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="sys:String">
+                            <TextBlock Text="{Binding}" Margin="0,3"/>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </StackPanel>
+        </Border>
+
+    </Grid>
+</Window>

@@ -10,8 +10,9 @@ using RSS_II_RGB.Windows;
 namespace RSS_II_RGB.App;
 
 /// <summary>
-/// Owns the device, render engine, and keyboard hook. Translates a UI effect
-/// choice into a layer stack and swaps it onto the running engine.
+/// Owns the device, render engine, and keyboard hook. Composes the active layer
+/// stack from a global effect plus zero or more per-zone overrides and streams it
+/// to the engine.
 /// </summary>
 internal sealed class KeyboardController : IAsyncDisposable
 {
@@ -21,6 +22,12 @@ internal sealed class KeyboardController : IAsyncDisposable
     private RenderEngine? _engine;
     private CancellationTokenSource? _cts;
     private Task? _engineTask;
+
+    // Composed state.
+    private EffectChoice _globalEffect = EffectChoice.Rainbow;
+    private Rgb _globalColor = new(0x00, 0xFF, 0x66);
+    private double _brightness = 1.0;
+    private IReadOnlyList<Zone> _zones = Array.Empty<Zone>();
 
     public KeyboardController(ILogSink log) => _log = log;
 
@@ -51,10 +58,27 @@ internal sealed class KeyboardController : IAsyncDisposable
         _engineTask = Task.Run(() => _engine.RunAsync(_cts.Token));
         IsRunning = true;
         _log.Log(LogLevel.Info, $"Started. Firmware {Firmware}, layout {LayoutId}.");
+        Rebuild();
         return true;
     }
 
-    public void ApplyEffect(EffectChoice choice, Rgb color, double brightness)
+    /// <summary>Set the base effect that covers every key.</summary>
+    public void SetGlobalEffect(EffectChoice effect, Rgb color, double brightness)
+    {
+        _globalEffect = effect;
+        _globalColor = color;
+        _brightness = brightness;
+        Rebuild();
+    }
+
+    /// <summary>Replace the per-zone overrides layered on top of the global effect.</summary>
+    public void SetZones(IReadOnlyList<Zone> zones)
+    {
+        _zones = zones;
+        Rebuild();
+    }
+
+    private void Rebuild()
     {
         if (_engine is null)
         {
@@ -62,40 +86,61 @@ internal sealed class KeyboardController : IAsyncDisposable
         }
 
         var layers = new List<IEffectLayer>();
-        switch (choice)
+        AddEffectLayers(layers, "global", _globalEffect, _globalColor, KeyMask.All, baseZ: 0);
+
+        int z = 100;
+        foreach (Zone zone in _zones)
         {
-            case EffectChoice.Off:
-                layers.Add(new SolidLayer("base", Rgb.Black, KeyMask.All));
-                break;
-            case EffectChoice.Solid:
-                layers.Add(new SolidLayer("base", color, KeyMask.All));
-                break;
-            case EffectChoice.Breathing:
-                layers.Add(new BreathingLayer("base", color, KeyMask.All));
-                break;
-            case EffectChoice.Rainbow:
-                layers.Add(new RainbowLayer("base", KeyMask.All));
-                break;
-            case EffectChoice.Wave:
-                layers.Add(new WaveLayer("base", KeyMask.All));
-                break;
-            case EffectChoice.Reactive:
-                layers.Add(new SolidLayer("base", new Rgb(0, 0, 20), KeyMask.All, zOrder: 0));
-                layers.Add(new KeypressFadeLayer("fade", Rgb.White, fadeSeconds: 0.6, zOrder: 10));
-                layers.Add(new RippleLayer("ripple", new Rgb(0, 180, 255), speedGridPerSec: 14,
-                                           width: 1.3, fadeSeconds: 0.8, zOrder: 20));
-                break;
+            if (zone.KeyIndices.Count == 0)
+            {
+                continue;
+            }
+            KeyMask mask = KeyMask.FromIndices(zone.KeyIndices is int[] arr ? arr : zone.KeyIndices.ToArray());
+            AddEffectLayers(layers, $"zone-{z}", zone.Effect, zone.Color, mask, baseZ: z);
+            z += 100;
         }
 
-        // Master brightness as a top Multiply layer (scales every effect uniformly).
-        if (brightness < 0.999)
+        // Master brightness on top: a Multiply layer that uniformly scales the result.
+        if (_brightness < 0.999)
         {
-            byte b = (byte)Math.Clamp(brightness * 255.0, 0, 255);
+            byte b = (byte)Math.Clamp(_brightness * 255.0, 0, 255);
             layers.Add(new SolidLayer("master-brightness", new Rgb(b, b, b), KeyMask.All,
-                                      zOrder: 1000, blend: BlendMode.Multiply));
+                                      zOrder: 1_000_000, blend: BlendMode.Multiply));
         }
 
         _engine.SetEffectLayers(layers);
+    }
+
+    // Maps an effect choice to its layer(s), masked to the given keys. Reactive is
+    // global-only (its overlays don't yet honour a mask), so a Reactive zone falls
+    // back to its dim base.
+    private static void AddEffectLayers(List<IEffectLayer> layers, string id, EffectChoice effect,
+                                        Rgb color, KeyMask mask, int baseZ)
+    {
+        switch (effect)
+        {
+            case EffectChoice.Off:
+                layers.Add(new SolidLayer(id, Rgb.Black, mask, baseZ));
+                break;
+            case EffectChoice.Solid:
+                layers.Add(new SolidLayer(id, color, mask, baseZ));
+                break;
+            case EffectChoice.Breathing:
+                layers.Add(new BreathingLayer(id, color, mask, zOrder: baseZ));
+                break;
+            case EffectChoice.Rainbow:
+                layers.Add(new RainbowLayer(id, mask, zOrder: baseZ));
+                break;
+            case EffectChoice.Wave:
+                layers.Add(new WaveLayer(id, mask, zOrder: baseZ));
+                break;
+            case EffectChoice.Reactive:
+                layers.Add(new SolidLayer($"{id}-base", new Rgb(0, 0, 20), mask, baseZ));
+                layers.Add(new KeypressFadeLayer($"{id}-fade", Rgb.White, fadeSeconds: 0.6, zOrder: baseZ + 10));
+                layers.Add(new RippleLayer($"{id}-ripple", new Rgb(0, 180, 255), speedGridPerSec: 14,
+                                           width: 1.3, fadeSeconds: 0.8, zOrder: baseZ + 20));
+                break;
+        }
     }
 
     public async ValueTask DisposeAsync()

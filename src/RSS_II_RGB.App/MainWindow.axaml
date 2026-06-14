@@ -33,6 +33,9 @@
                 <Button Content="White"   Command="{Binding SetColorCommand}" CommandParameter="FFFFFF" Margin="0,0,6,6"/>
             </WrapPanel>
 
+            <Button Content="Zone editor…" Click="OnOpenZoneEditor"
+                    IsEnabled="{Binding IsConnected}" HorizontalAlignment="Left"/>
+
             <TextBlock Text="Tip: choose 'Reactive' and type — each key flares and ripples."
                        Opacity="0.6" TextWrapping="Wrap"/>
         </StackPanel>
