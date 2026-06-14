@@ -3,6 +3,7 @@ using RSS_II_RGB.Core.Effects;
 using RSS_II_RGB.Core.Effects.Layers;
 using RSS_II_RGB.Core.Engine;
 using RSS_II_RGB.Core.Input;
+using RSS_II_RGB.Core.Layout;
 using RSS_II_RGB.Core.Logging;
 using RSS_II_RGB.Core.Rendering;
 using RSS_II_RGB.Core.Sensors;
@@ -30,6 +31,7 @@ internal sealed class KeyboardController : IAsyncDisposable
     private Rgb _globalColor = new(0x00, 0xFF, 0x66);
     private double _brightness = 1.0;
     private IReadOnlyList<Zone> _zones = Array.Empty<Zone>();
+    private KeyboardProfile _profile = ScopeIILayout.Profile;
 
     public KeyboardController(ILogSink log, SensorState sensors)
     {
@@ -41,6 +43,9 @@ internal sealed class KeyboardController : IAsyncDisposable
     public string Firmware { get; private set; } = "";
     public int LayoutId { get; private set; } = -1;
     public IReadOnlyList<Zone> Zones => _zones;
+
+    /// <summary>The connected keyboard's layout profile (geometry + key map).</summary>
+    public KeyboardProfile Profile => _profile;
 
     /// <summary>Brightness multiplier for the audio visualiser (set before SetGlobalEffect).</summary>
     public double AudioSensitivity { get; set; } = 0.9;
@@ -66,12 +71,14 @@ internal sealed class KeyboardController : IAsyncDisposable
             return false;
         }
 
+        _profile = _device.Profile;
+
         DeviceInfo info = await _device.ReadInfoAsync();
         Firmware = info.FirmwareVersion;
         LayoutId = info.LayoutId;
 
-        _engine = new RenderEngine(_device, new Compositor(), _log);
-        _hook = new Win32KeyboardHook();
+        _engine = new RenderEngine(_device, new Compositor(_profile.LedCount), _log, _profile);
+        _hook = new Win32KeyboardHook(_profile);
         _hook.KeyChanged += OnKey;
         await _hook.StartAsync();
 
@@ -158,7 +165,7 @@ internal sealed class KeyboardController : IAsyncDisposable
         // Layer 5 — system-metric bars on top of every effect and zone.
         if (ShowMetrics)
         {
-            layers.Add(new MetricOverlayLayer("metrics", _sensors, MetricLayouts.Build(MetricLayout),
+            layers.Add(new MetricOverlayLayer("metrics", _sensors, MetricLayouts.Build(MetricLayout, _profile),
                                               PercentThresholds, TempThresholds, zOrder: ZMetrics));
         }
 

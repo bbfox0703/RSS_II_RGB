@@ -20,10 +20,6 @@ public readonly record struct LedKey(byte KeyId, string Name, int Row, int Col, 
 /// </summary>
 public static class ScopeIILayout
 {
-    public const int LedCount = CoreConstants.LedCount; // 107
-    public const int Rows = CoreConstants.MatrixRows;   // 6
-    public const int Cols = CoreConstants.MatrixCols;   // 24
-
     // Render order = vendor led_names order. KeyId is the byte addressed in the
     // Direct packet; (Row, Col) come from the vendor matrix.
     private static readonly LedKey[] _keys =
@@ -137,26 +133,24 @@ public static class ScopeIILayout
         new(0xB4, "NUMPAD_ENTER", 4, 23, 106),
     };
 
-    // keyId (0..255) -> render index, or -1 if the byte is not a Scope II LED.
-    private static readonly int[] _indexByKeyId = BuildIndexByKeyId();
+    /// <summary>
+    /// The Scope II keyboard profile (107-LED ANSI). Shared by Scope II RX and NX,
+    /// which are layout-identical. This is the canonical profile the render path
+    /// uses; the static members below delegate to it for tests / reference.
+    /// </summary>
+    public static KeyboardProfile Profile { get; } =
+        new("Strix Scope II", CoreConstants.MatrixRows, CoreConstants.MatrixCols, _keys);
 
     /// <summary>All 107 LEDs in Direct-packet render order.</summary>
-    public static ReadOnlySpan<LedKey> Keys => _keys;
+    public static ReadOnlySpan<LedKey> Keys => Profile.Keys;
 
     /// <summary>The LED at a render index (0..106).</summary>
-    public static ref readonly LedKey ByIndex(int index) => ref _keys[index];
+    public static ref readonly LedKey ByIndex(int index) => ref Profile.ByIndex(index);
 
     /// <summary>Render index for a device key id, or -1 if not addressable.</summary>
-    public static int IndexForKeyId(byte keyId) => _indexByKeyId[keyId];
+    public static int IndexForKeyId(byte keyId) => Profile.IndexForKeyId(keyId);
 
-    private static int[] BuildIndexByKeyId()
-    {
-        var map = new int[256];
-        Array.Fill(map, -1);
-        for (int i = 0; i < _keys.Length; i++)
-        {
-            map[_keys[i].KeyId] = i;
-        }
-        return map;
-    }
+    /// <summary>Matrix geometry (6 rows × 24 cols).</summary>
+    public static int Rows => Profile.Rows;
+    public static int Cols => Profile.Cols;
 }

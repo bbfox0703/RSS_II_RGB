@@ -1,3 +1,4 @@
+using RSS_II_RGB.Core.Layout;
 using RSS_II_RGB.Core.Rendering;
 
 namespace RSS_II_RGB.Core.Effects;
@@ -11,8 +12,15 @@ namespace RSS_II_RGB.Core.Effects;
 public sealed class Compositor
 {
     private readonly List<IEffectLayer> _layers = new();
-    private readonly Rgb[] _scratch = new Rgb[CoreConstants.LedCount];
+    private readonly Rgb[] _scratch;
     private bool _needsSort;
+
+    /// <summary>Defaults to the Scope II LED count (used by tests).</summary>
+    public Compositor() : this(ScopeIILayout.Profile.LedCount)
+    {
+    }
+
+    public Compositor(int ledCount) => _scratch = new Rgb[ledCount];
 
     public IReadOnlyList<IEffectLayer> Layers => _layers;
 

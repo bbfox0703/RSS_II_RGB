@@ -72,8 +72,8 @@ internal sealed partial class ZoneEditorViewModel : ObservableObject
     partial void OnZoneEffectChanged(EffectChoice value) => OnPropertyChanged(nameof(IsAudioMode));
 
     // The keys occupy CanvasWidth x CanvasHeight; the host adds EdgePad all round.
-    public double CanvasWidth => ScopeIILayout.Cols * CellStride;
-    public double CanvasHeight => ScopeIILayout.Rows * CellStride;
+    public double CanvasWidth => _controller.Profile.Cols * CellStride;
+    public double CanvasHeight => _controller.Profile.Rows * CellStride;
     public double HostWidth => CanvasWidth + 2 * EdgePad;
     public double HostHeight => CanvasHeight + 2 * EdgePad;
     public Thickness KeysMargin => new(EdgePad);
@@ -83,7 +83,7 @@ internal sealed partial class ZoneEditorViewModel : ObservableObject
         _controller = controller;
         _settings = settings;
 
-        foreach (LedKey key in ScopeIILayout.Keys)
+        foreach (LedKey key in _controller.Profile.Keys)
         {
             Keys.Add(new KeyVM(key.Index, key.Name, key.Col * CellStride, key.Row * CellStride));
         }

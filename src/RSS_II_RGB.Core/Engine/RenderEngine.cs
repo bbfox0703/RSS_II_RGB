@@ -4,6 +4,7 @@ using System.Runtime.InteropServices;
 using RSS_II_RGB.Core.Device;
 using RSS_II_RGB.Core.Effects;
 using RSS_II_RGB.Core.Input;
+using RSS_II_RGB.Core.Layout;
 using RSS_II_RGB.Core.Logging;
 using RSS_II_RGB.Core.Rendering;
 
@@ -20,9 +21,10 @@ public sealed class RenderEngine : IAsyncDisposable
     private readonly IKeyboardDevice _device;
     private readonly Compositor _compositor;
     private readonly ILogSink _log;
+    private readonly KeyboardProfile _profile;
     private readonly int _targetFps;
 
-    private readonly LedFrame _frame = new();
+    private readonly LedFrame _frame;
     private readonly ConcurrentQueue<KeyEvent> _keyQueue = new();
     private readonly List<KeyHit> _hits = new();
 
@@ -30,11 +32,13 @@ public sealed class RenderEngine : IAsyncDisposable
     private volatile IReadOnlyList<IEffectLayer>? _pendingLayers;
 
     public RenderEngine(IKeyboardDevice device, Compositor compositor, ILogSink log,
-                        int targetFps = CoreConstants.DefaultTargetFps)
+                        KeyboardProfile profile, int targetFps = CoreConstants.DefaultTargetFps)
     {
         _device = device;
         _compositor = compositor;
         _log = log;
+        _profile = profile;
+        _frame = new LedFrame(profile.LedCount);
         _targetFps = Math.Clamp(targetFps, 1, 240);
     }
 
@@ -70,7 +74,7 @@ public sealed class RenderEngine : IAsyncDisposable
             ApplyPendingLayers();
             DrainKeyEvents(now);
 
-            var ctx = new EffectContext(now, delta, CollectionsMarshal.AsSpan(_hits));
+            var ctx = new EffectContext(now, delta, CollectionsMarshal.AsSpan(_hits), _profile);
             _compositor.Compose(_frame, ctx);
 
             try

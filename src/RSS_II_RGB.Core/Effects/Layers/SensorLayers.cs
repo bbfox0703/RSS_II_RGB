@@ -94,8 +94,8 @@ public sealed class AudioReactiveLayer : IEffectLayer
 
         for (int i = 0; i < target.Length; i++)
         {
-            int col = ScopeIILayout.ByIndex(i).Col;
-            int band = Math.Clamp(col * n / ScopeIILayout.Cols, 0, n - 1);
+            int col = ctx.Layout.ByIndex(i).Col;
+            int band = Math.Clamp(col * n / ctx.Layout.Cols, 0, n - 1);
             double magnitude = Math.Clamp(_bands[band] * _sensitivity, 0, 1);
             double hue = (double)band / n * 0.85; // low freq red ... high freq violet
             target[i] = Rgb.FromHsv(hue, 1, magnitude);

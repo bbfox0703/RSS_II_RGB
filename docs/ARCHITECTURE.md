@@ -127,6 +127,19 @@ SensorsHost (non-AOT)  --named pipe-->  App (AOT)  -->  SensorState  -->  effect
 (enums as readable strings). The controller restores the global effect, audio
 sensitivity, zones, and metric overlay config on launch; every UI change saves.
 
+## Per-device layout (`KeyboardProfile`)
+
+Everything device-specific — LED count, matrix geometry, the ordered key table
+(render order + key ids), and the scan-code → index map — lives in a
+`Core/Layout/KeyboardProfile`. The render path is driven entirely by a profile
+instance: the engine threads it through `EffectContext.Layout`, the device sizes
+its frame buffer and Direct packets from it, and the hook resolves presses with a
+per-profile `ScancodeResolver`. The Direct command itself (15 LEDs/packet,
+65-byte report, `0xC0 0x81`) is shared across the whole ASUS TUF keyboard family,
+so adding a keyboard is data: define its `KeyboardProfile` and map its PID to it
+in the device factory. `ScopeIILayout.Profile` is the one concrete profile today
+(used by both Scope II RX and the layout-identical NX).
+
 ## Reference
 
 The Direct/HID protocol, key‑id ↔ name map, and the 6×24 matrix were ported from

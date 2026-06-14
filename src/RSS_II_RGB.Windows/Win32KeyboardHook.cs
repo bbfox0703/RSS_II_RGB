@@ -16,9 +16,17 @@ public sealed class Win32KeyboardHook : IKeyboardHook
     private static Win32KeyboardHook? _instance;
 
     private readonly ManualResetEventSlim _installed = new(false);
+    private readonly KeyboardProfile _profile;
+    private readonly ScancodeResolver _resolver;
     private nint _hook;
     private Thread? _thread;
     private uint _threadId;
+
+    public Win32KeyboardHook(KeyboardProfile profile)
+    {
+        _profile = profile;
+        _resolver = new ScancodeResolver(profile);
+    }
 
     public event Action<KeyEvent>? KeyChanged;
 
@@ -108,8 +116,8 @@ public sealed class Win32KeyboardHook : IKeyboardHook
         uint flags = (uint)Marshal.ReadInt32(lParam, 8);
         bool extended = (flags & NativeMethods.LLKHF_EXTENDED) != 0;
 
-        int index = ScancodeMap.ToKeyIndex(scanCode, extended);
-        byte keyId = index >= 0 ? ScopeIILayout.ByIndex(index).KeyId : (byte)0;
+        int index = _resolver.ToKeyIndex(scanCode, extended);
+        byte keyId = index >= 0 ? _profile.ByIndex(index).KeyId : (byte)0;
 
         KeyChanged?.Invoke(new KeyEvent(index, keyId, down, Environment.TickCount64));
     }

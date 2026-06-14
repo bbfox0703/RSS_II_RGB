@@ -7,39 +7,43 @@ namespace RSS_II_RGB.Core.Device;
 /// Pure builder for the "Direct" per-LED HID command (no I/O — unit-testable).
 /// Ported from vendor/openrgb AsusAuraTUFKeyboardController.cpp (UpdateLeds).
 ///
-/// One frame = <see cref="CoreConstants.PacketsPerFrame"/> packets of
-/// <see cref="CoreConstants.ReportLength"/> bytes. Each packet:
+/// One frame = the profile's packet count, each <see cref="CoreConstants.ReportLength"/>
+/// bytes. Each packet:
 ///   [0] = 0x00 (HID report id)
 ///   [1] = 0xC0, [2] = 0x81, [3] = led count in this packet, [4] = 0x00
 ///   then 4 bytes per LED: keyId, R, G, B
-/// LEDs are emitted in <see cref="ScopeIILayout.Keys"/> order, 15 per packet.
+/// LEDs are emitted in the profile's <see cref="KeyboardProfile.Keys"/> order, 15 per packet.
 /// </summary>
 public static class DirectProtocol
 {
-    /// <summary>Total bytes for one frame's packets (8 * 65 = 520).</summary>
+    /// <summary>Scope II frame size (8 * 65 = 520) — the default profile / tests.</summary>
     public const int FrameBufferSize = CoreConstants.PacketsPerFrame * CoreConstants.ReportLength;
 
-    /// <summary>
-    /// Serialise <paramref name="pixels"/> (107 colours, render order) into
-    /// <paramref name="dest"/> (>= <see cref="FrameBufferSize"/> bytes) as the
-    /// 8 ready-to-write Direct packets. Padding bytes are zeroed.
-    /// </summary>
+    /// <summary>Serialise a frame for the default Scope II profile.</summary>
     public static void BuildFrame(ReadOnlySpan<Rgb> pixels, Span<byte> dest)
+        => BuildFrame(ScopeIILayout.Profile, pixels, dest);
+
+    /// <summary>
+    /// Serialise <paramref name="pixels"/> (one per LED, render order) into
+    /// <paramref name="dest"/> (>= <paramref name="profile"/>.FrameBufferSize bytes)
+    /// as the ready-to-write Direct packets. Padding bytes are zeroed.
+    /// </summary>
+    public static void BuildFrame(KeyboardProfile profile, ReadOnlySpan<Rgb> pixels, Span<byte> dest)
     {
-        if (pixels.Length != CoreConstants.LedCount)
+        if (pixels.Length != profile.LedCount)
         {
-            throw new ArgumentException($"Expected {CoreConstants.LedCount} pixels, got {pixels.Length}.", nameof(pixels));
+            throw new ArgumentException($"Expected {profile.LedCount} pixels, got {pixels.Length}.", nameof(pixels));
         }
-        if (dest.Length < FrameBufferSize)
+        if (dest.Length < profile.FrameBufferSize)
         {
-            throw new ArgumentException($"Destination needs at least {FrameBufferSize} bytes.", nameof(dest));
+            throw new ArgumentException($"Destination needs at least {profile.FrameBufferSize} bytes.", nameof(dest));
         }
 
         dest.Clear(); // report id 0x00 + all padding
 
-        ReadOnlySpan<LedKey> keys = ScopeIILayout.Keys;
+        ReadOnlySpan<LedKey> keys = profile.Keys;
 
-        for (int p = 0; p < CoreConstants.PacketsPerFrame; p++)
+        for (int p = 0; p < profile.PacketsPerFrame; p++)
         {
             int offset = p * CoreConstants.LedsPerPacket;
             int count = Math.Min(CoreConstants.LedsPerPacket, keys.Length - offset);

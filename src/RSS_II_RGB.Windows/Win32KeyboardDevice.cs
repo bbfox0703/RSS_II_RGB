@@ -4,6 +4,7 @@ using System.Runtime.InteropServices;
 using Microsoft.Win32.SafeHandles;
 using RSS_II_RGB.Core;
 using RSS_II_RGB.Core.Device;
+using RSS_II_RGB.Core.Layout;
 using RSS_II_RGB.Core.Rendering;
 using RSS_II_RGB.Windows.Interop;
 
@@ -38,7 +39,8 @@ public sealed class Win32KeyboardDeviceFactory : IKeyboardDeviceFactory
             return Task.FromResult<IKeyboardDevice?>(null); // likely held by Armoury Crate / OpenRGB
         }
 
-        return Task.FromResult<IKeyboardDevice?>(new Win32KeyboardDevice(handle));
+        // Both supported PIDs (Scope II RX / NX) share the one layout profile.
+        return Task.FromResult<IKeyboardDevice?>(new Win32KeyboardDevice(handle, ScopeIILayout.Profile));
     }
 
     private static string? FindControlInterfacePath()
@@ -177,18 +179,26 @@ public sealed class Win32KeyboardDeviceFactory : IKeyboardDeviceFactory
 public sealed class Win32KeyboardDevice : IKeyboardDevice
 {
     private readonly SafeFileHandle _handle;
-    private readonly byte[] _frameBuffer = new byte[DirectProtocol.FrameBufferSize];
+    private readonly KeyboardProfile _profile;
+    private readonly byte[] _frameBuffer;
 
-    internal Win32KeyboardDevice(SafeFileHandle handle) => _handle = handle;
+    internal Win32KeyboardDevice(SafeFileHandle handle, KeyboardProfile profile)
+    {
+        _handle = handle;
+        _profile = profile;
+        _frameBuffer = new byte[profile.FrameBufferSize];
+    }
 
     public bool IsOpen => !_handle.IsInvalid && !_handle.IsClosed;
+
+    public KeyboardProfile Profile => _profile;
 
     public Task WriteFrameAsync(LedFrame frame, CancellationToken ct = default)
     {
         ct.ThrowIfCancellationRequested();
 
-        DirectProtocol.BuildFrame(frame.Pixels, _frameBuffer);
-        for (int p = 0; p < CoreConstants.PacketsPerFrame; p++)
+        DirectProtocol.BuildFrame(_profile, frame.Pixels, _frameBuffer);
+        for (int p = 0; p < _profile.PacketsPerFrame; p++)
         {
             WriteReport(_frameBuffer.AsSpan(p * CoreConstants.ReportLength, CoreConstants.ReportLength));
         }

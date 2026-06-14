@@ -1,3 +1,4 @@
+using RSS_II_RGB.Core.Layout;
 using RSS_II_RGB.Core.Rendering;
 
 namespace RSS_II_RGB.Core.Device;
@@ -23,6 +24,9 @@ public readonly record struct HardwareEffect(HardwareEffectKind Kind, Rgb Color,
 public interface IKeyboardDevice : IAsyncDisposable
 {
     bool IsOpen { get; }
+
+    /// <summary>The connected keyboard's layout profile (geometry + key map).</summary>
+    KeyboardProfile Profile { get; }
 
     /// <summary>Stream one software-rendered frame (the 8 Direct packets).</summary>
     Task WriteFrameAsync(LedFrame frame, CancellationToken ct = default);

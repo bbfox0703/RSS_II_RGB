@@ -82,7 +82,7 @@ public sealed class RainbowLayer : IEffectLayer
         double t = ctx.Elapsed.TotalSeconds;
         for (int i = 0; i < target.Length; i++)
         {
-            double hue = (double)i / CoreConstants.LedCount * _spread + t * _speed;
+            double hue = (double)i / target.Length * _spread + t * _speed;
             target[i] = Rgb.FromHsv(hue, 1, 1);
         }
     }
@@ -115,8 +115,8 @@ public sealed class WaveLayer : IEffectLayer
         double t = ctx.Elapsed.TotalSeconds;
         for (int i = 0; i < target.Length; i++)
         {
-            int col = ScopeIILayout.ByIndex(i).Col;
-            double hue = (double)col / ScopeIILayout.Cols + t * _speed;
+            int col = ctx.Layout.ByIndex(i).Col;
+            double hue = (double)col / ctx.Layout.Cols + t * _speed;
             target[i] = Rgb.FromHsv(hue, 1, 1);
         }
     }

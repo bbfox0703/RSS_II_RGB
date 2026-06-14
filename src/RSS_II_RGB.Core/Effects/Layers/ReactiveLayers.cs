@@ -38,7 +38,7 @@ public sealed class KeypressFadeLayer : IEffectLayer
     {
         foreach (KeyHit h in ctx.NewHits)
         {
-            if ((uint)h.KeyIndex < (uint)CoreConstants.LedCount)
+            if ((uint)h.KeyIndex < (uint)target.Length)
             {
                 _active.Add(new Active(h.KeyIndex, h.When));
             }
@@ -101,9 +101,9 @@ public sealed class RippleLayer : IEffectLayer
     {
         foreach (KeyHit h in ctx.NewHits)
         {
-            if ((uint)h.KeyIndex < (uint)CoreConstants.LedCount)
+            if ((uint)h.KeyIndex < (uint)target.Length)
             {
-                ref readonly LedKey key = ref ScopeIILayout.ByIndex(h.KeyIndex);
+                ref readonly LedKey key = ref ctx.Layout.ByIndex(h.KeyIndex);
                 _active.Add(new Active(key.Row, key.Col, h.When));
             }
         }
@@ -124,7 +124,7 @@ public sealed class RippleLayer : IEffectLayer
 
             for (int i = 0; i < target.Length; i++)
             {
-                ref readonly LedKey key = ref ScopeIILayout.ByIndex(i);
+                ref readonly LedKey key = ref ctx.Layout.ByIndex(i);
                 double dr = key.Row - row0;
                 double dc = key.Col - col0;
                 double dist = Math.Sqrt(dr * dr + dc * dc);

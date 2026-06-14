@@ -1,3 +1,4 @@
+using RSS_II_RGB.Core.Layout;
 using RSS_II_RGB.Core.Rendering;
 
 namespace RSS_II_RGB.Core.Effects;
@@ -32,11 +33,20 @@ public readonly ref struct EffectContext
     public TimeSpan Delta { get; }
     public ReadOnlySpan<KeyHit> NewHits { get; }
 
+    /// <summary>The connected keyboard's layout (geometry + key map) for this frame.</summary>
+    public KeyboardProfile Layout { get; }
+
     public EffectContext(TimeSpan elapsed, TimeSpan delta, ReadOnlySpan<KeyHit> newHits)
+        : this(elapsed, delta, newHits, ScopeIILayout.Profile)
+    {
+    }
+
+    public EffectContext(TimeSpan elapsed, TimeSpan delta, ReadOnlySpan<KeyHit> newHits, KeyboardProfile layout)
     {
         Elapsed = elapsed;
         Delta = delta;
         NewHits = newHits;
+        Layout = layout;
     }
 }
 
@@ -55,7 +65,18 @@ public readonly struct KeyMask
 
     public static KeyMask FromIndices(ReadOnlySpan<int> indices)
     {
-        var arr = new bool[CoreConstants.LedCount];
+        // Self-size to the highest index so the mask is device-independent: the
+        // compositor only queries Contains(i) for i < frame length anyway.
+        int max = -1;
+        foreach (int i in indices)
+        {
+            if (i > max)
+            {
+                max = i;
+            }
+        }
+
+        var arr = new bool[max + 1];
         foreach (int i in indices)
         {
             if ((uint)i < (uint)arr.Length)
