@@ -12,7 +12,17 @@ internal static class Program
         using var mutex = new Mutex(initiallyOwned: true, AppConstants.SingleInstanceMutexName, out bool createdNew);
         if (!createdNew)
         {
-            return 0; // another instance is already running
+            // Already running (possibly hidden in the tray): ask it to surface.
+            try
+            {
+                using EventWaitHandle ev = EventWaitHandle.OpenExisting(AppConstants.ShowWindowEventName);
+                ev.Set();
+            }
+            catch
+            {
+                // No listener yet — nothing to surface.
+            }
+            return 0;
         }
 
         BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);

@@ -10,6 +10,7 @@ public partial class App : Application
 {
     private KeyboardController? _controller;
     private SensorService? _sensorService;
+    private TrayIconManager? _tray;
 
     public override void Initialize() => AvaloniaXamlLoader.Load(this);
 
@@ -24,8 +25,13 @@ public partial class App : Application
             var settings = new SettingsService();
             var viewModel = new MainViewModel(_controller, settings);
 
-            desktop.MainWindow = new MainWindow { DataContext = viewModel };
+            var mainWindow = new MainWindow { DataContext = viewModel };
+            desktop.MainWindow = mainWindow;
             desktop.ShutdownRequested += OnShutdownRequested;
+
+            // Keep running in the tray when the window is closed/minimised.
+            _tray = new TrayIconManager(desktop, mainWindow);
+            _tray.Initialize();
 
             _ = viewModel.InitializeAsync();
             _sensorService.Start();
@@ -36,6 +42,7 @@ public partial class App : Application
 
     private async void OnShutdownRequested(object? sender, ShutdownRequestedEventArgs e)
     {
+        _tray?.Dispose();
         if (_sensorService is not null)
         {
             await _sensorService.DisposeAsync();
