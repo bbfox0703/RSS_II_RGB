@@ -50,9 +50,17 @@
             <TextBlock Text="{Binding AudioSensitivityText}" FontWeight="SemiBold"/>
             <Slider Minimum="0.5" Maximum="4" Value="{Binding AudioSensitivity}" IsEnabled="{Binding IsConnected}"/>
 
-            <TextBlock Text="{Binding AudioBarsMultiplierText}" FontWeight="SemiBold"
+            <TextBlock Text="{Binding AudioBarsBassText}" FontWeight="SemiBold"
                        IsVisible="{Binding IsAudioBarsLayout}"/>
-            <Slider Minimum="0.5" Maximum="2" Value="{Binding AudioBarsMultiplier}"
+            <Slider Minimum="0.5" Maximum="2" Value="{Binding AudioBarsBassMultiplier}"
+                    IsEnabled="{Binding IsConnected}" IsVisible="{Binding IsAudioBarsLayout}"/>
+            <TextBlock Text="{Binding AudioBarsMidText}" FontWeight="SemiBold"
+                       IsVisible="{Binding IsAudioBarsLayout}"/>
+            <Slider Minimum="0.5" Maximum="2" Value="{Binding AudioBarsMidMultiplier}"
+                    IsEnabled="{Binding IsConnected}" IsVisible="{Binding IsAudioBarsLayout}"/>
+            <TextBlock Text="{Binding AudioBarsTrebleText}" FontWeight="SemiBold"
+                       IsVisible="{Binding IsAudioBarsLayout}"/>
+            <Slider Minimum="0.5" Maximum="2" Value="{Binding AudioBarsTrebleMultiplier}"
                     IsEnabled="{Binding IsConnected}" IsVisible="{Binding IsAudioBarsLayout}"/>
 
             <TextBlock Text="{x:Static vm:L.ColourLabel}" FontWeight="SemiBold"/>

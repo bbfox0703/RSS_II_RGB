@@ -50,9 +50,12 @@ internal sealed class KeyboardController : IAsyncDisposable
     /// <summary>Brightness multiplier for the audio visualiser (set before SetGlobalEffect).</summary>
     public double AudioSensitivity { get; set; } = 0.9;
 
-    // Global Audio overlay layout (spectrum vs three-region bars) and the bars multiplier.
+    // Global Audio overlay layout (spectrum vs three-region bars) and the per-region
+    // bars multipliers (bass needs the most boost, treble the least).
     public AudioLayoutChoice AudioLayout { get; set; } = AudioLayoutChoice.Spectrum;
-    public double AudioBarsMultiplier { get; set; } = 1.0;
+    public double AudioBarsBassMultiplier { get; set; } = 2.0;
+    public double AudioBarsMidMultiplier { get; set; } = 1.0;
+    public double AudioBarsTrebleMultiplier { get; set; } = 0.8;
 
     // Independent global overlays, toggled from the main UI (set before SetGlobalEffect/SetZones).
     // Reactive is the higher-priority of the two: it sits above the zones, audio below them.
@@ -141,14 +144,16 @@ internal sealed class KeyboardController : IAsyncDisposable
                                               AudioBarRows.BassRow(_profile),
                                               AudioBarRows.MidRow(_profile),
                                               AudioBarRows.TrebleRow(_profile),
-                                              multiplier: AudioBarsMultiplier, zOrder: ZAudio,
-                                              blend: BlendMode.Additive));
+                                              bassMultiplier: AudioBarsBassMultiplier,
+                                              midMultiplier: AudioBarsMidMultiplier,
+                                              trebleMultiplier: AudioBarsTrebleMultiplier,
+                                              zOrder: ZAudio, blend: BlendMode.Over));
             }
             else
             {
                 layers.Add(new AudioReactiveLayer("audio", _sensors, KeyMask.All,
                                                   sensitivity: AudioSensitivity, zOrder: ZAudio,
-                                                  blend: BlendMode.Additive));
+                                                  blend: BlendMode.Over));
             }
         }
 

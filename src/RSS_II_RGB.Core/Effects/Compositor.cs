@@ -75,6 +75,7 @@ public sealed class Compositor
         BlendMode.Additive => new Rgb(SatAdd(dst.R, src.R), SatAdd(dst.G, src.G), SatAdd(dst.B, src.B)),
         BlendMode.Multiply => new Rgb(MulChannel(dst.R, src.R), MulChannel(dst.G, src.G), MulChannel(dst.B, src.B)),
         BlendMode.Max => new Rgb(Math.Max(dst.R, src.R), Math.Max(dst.G, src.G), Math.Max(dst.B, src.B)),
+        BlendMode.Over => (src.R | src.G | src.B) == 0 ? dst : src, // black source = transparent
         _ => src,
     };
 

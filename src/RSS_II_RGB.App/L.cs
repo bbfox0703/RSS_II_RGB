@@ -23,7 +23,9 @@ internal static class L
     public static string ReactiveOverlay => S("Reactive — keypress flare + ripple", "反應 — 按鍵閃光 + 漣漪");
     public static string AudioOverlay => S("Audio reactive", "音訊反應");
     public static string AudioLayoutLabel => S("Audio layout", "音訊佈局");
-    public static string AudioBarsMultiplierFormat => S("Audio bars multiplier: {0:0.0}×", "音訊長條倍率：{0:0.0}×");
+    public static string AudioBarsBassFormat => S("Bass multiplier: {0:0.0}×", "低音倍率：{0:0.0}×");
+    public static string AudioBarsMidFormat => S("Mid multiplier: {0:0.0}×", "中音倍率：{0:0.0}×");
+    public static string AudioBarsTrebleFormat => S("Treble multiplier: {0:0.0}×", "高音倍率：{0:0.0}×");
     public static string PriorityHint =>
         S("Reactive sits above audio; system metrics sit above both.",
           "反應位於音訊之上；系統指標位於兩者之上。");

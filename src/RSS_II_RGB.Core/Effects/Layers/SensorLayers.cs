@@ -155,9 +155,10 @@ public sealed class AudioVolumeLayer : IEffectLayer
 /// <summary>
 /// Splits the keyboard into three horizontal regions — treble (top alpha row),
 /// mid (home row), bass (bottom alpha row) — and lights each as a left-to-right
-/// bar whose length tracks that band's energy: the louder the band, the more keys
-/// in its row light up (e.g. heavy bass fills Left Shift → Right Shift). Additive
-/// overlay, so silence is transparent and the base effect shows through. Colours:
+/// bar whose length tracks that band's energy (scaled by a per-region multiplier):
+/// the louder the band, the more keys in its row light up (e.g. heavy bass fills
+/// Left Shift → Right Shift). Uses <see cref="BlendMode.Over"/> so lit keys show
+/// clearly over any base effect while unlit keys stay transparent. Colours:
 /// bass = red, mid = green, treble = blue.
 /// </summary>
 public sealed class AudioBarsLayer : IEffectLayer
@@ -166,18 +167,23 @@ public sealed class AudioBarsLayer : IEffectLayer
     private readonly int[] _bass;   // each row's render indices, ordered left-to-right
     private readonly int[] _mid;
     private readonly int[] _treble;
-    private readonly double _multiplier;
+    private readonly double _bassMul;
+    private readonly double _midMul;
+    private readonly double _trebleMul;
     private readonly double[] _bands = new double[CoreConstants.AudioBandCount];
 
     public AudioBarsLayer(string id, SensorState state, int[] bass, int[] mid, int[] treble,
-                          double multiplier = 1.0, int zOrder = 0, BlendMode blend = BlendMode.Additive)
+                          double bassMultiplier = 1.0, double midMultiplier = 1.0, double trebleMultiplier = 1.0,
+                          int zOrder = 0, BlendMode blend = BlendMode.Over)
     {
         Id = id;
         _state = state;
         _bass = bass;
         _mid = mid;
         _treble = treble;
-        _multiplier = multiplier;
+        _bassMul = bassMultiplier;
+        _midMul = midMultiplier;
+        _trebleMul = trebleMultiplier;
         ZOrder = zOrder;
         Blend = blend;
 
@@ -202,14 +208,14 @@ public sealed class AudioBarsLayer : IEffectLayer
             return; // silent — additive black, base shows through
         }
 
-        DrawBar(target, _bass, RegionLevel(n, CoreConstants.AudioMinHz, CoreConstants.AudioBassMaxHz), hue: 0.00);   // red
-        DrawBar(target, _mid, RegionLevel(n, CoreConstants.AudioBassMaxHz, CoreConstants.AudioMidMaxHz), hue: 0.33); // green
-        DrawBar(target, _treble, RegionLevel(n, CoreConstants.AudioMidMaxHz, CoreConstants.AudioMaxHz), hue: 0.66);  // blue
+        DrawBar(target, _bass, RegionLevel(n, CoreConstants.AudioMinHz, CoreConstants.AudioBassMaxHz) * _bassMul, hue: 0.00);   // red
+        DrawBar(target, _mid, RegionLevel(n, CoreConstants.AudioBassMaxHz, CoreConstants.AudioMidMaxHz) * _midMul, hue: 0.33);  // green
+        DrawBar(target, _treble, RegionLevel(n, CoreConstants.AudioMidMaxHz, CoreConstants.AudioMaxHz) * _trebleMul, hue: 0.66); // blue
     }
 
-    private void DrawBar(Span<Rgb> target, int[] keys, double level, double hue)
+    private static void DrawBar(Span<Rgb> target, int[] keys, double level, double hue)
     {
-        level = Math.Clamp(level * _multiplier, 0, 1);
+        level = Math.Clamp(level, 0, 1);
         int lit = (int)Math.Round(level * keys.Length);
         if (lit <= 0)
         {

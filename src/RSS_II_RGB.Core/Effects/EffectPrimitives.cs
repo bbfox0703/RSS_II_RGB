@@ -20,6 +20,14 @@ public enum BlendMode
 
     /// <summary>Channel-wise maximum.</summary>
     Max,
+
+    /// <summary>
+    /// Opaque where lit, transparent where black: a non-black source pixel replaces
+    /// the destination (so it shows clearly over any base), while a pure-black source
+    /// pixel is a no-op (the layer below shows through). Use for overlays that must
+    /// stay legible on top of bright effects (audio bars / spectrum).
+    /// </summary>
+    Over,
 }
 
 /// <summary>

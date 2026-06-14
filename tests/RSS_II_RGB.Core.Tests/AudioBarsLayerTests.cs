@@ -32,9 +32,9 @@ public class AudioBarsLayerTests
     private static readonly int[] MidRow = { 4, 5, 6, 7 };
     private static readonly int[] TrebleRow = { 8, 9, 10, 11 };
 
-    private static Rgb[] Render(SensorState state, double multiplier = 1.0)
+    private static Rgb[] Render(SensorState state, double bassMul = 1.0, double midMul = 1.0, double trebleMul = 1.0)
     {
-        var layer = new AudioBarsLayer("bars", state, BassRow, MidRow, TrebleRow, multiplier);
+        var layer = new AudioBarsLayer("bars", state, BassRow, MidRow, TrebleRow, bassMul, midMul, trebleMul);
         var target = new Rgb[20];
         layer.Render(target, new EffectContext(TimeSpan.Zero, TimeSpan.Zero, ReadOnlySpan<KeyHit>.Empty));
         return target;
@@ -65,8 +65,8 @@ public class AudioBarsLayerTests
     [Fact]
     public void Multiplier_ScalesBarLength()
     {
-        // bass 0.5 × 2 clamps to a full row.
-        Rgb[] t = Render(StateWith(bass: 0.5, mid: 0, treble: 0), multiplier: 2.0);
+        // bass 0.5 × 2 clamps to a full row; per-region (mid/treble unaffected).
+        Rgb[] t = Render(StateWith(bass: 0.5, mid: 0, treble: 0), bassMul: 2.0);
         foreach (int i in BassRow) Assert.True(t[i].R > 0);
     }
 

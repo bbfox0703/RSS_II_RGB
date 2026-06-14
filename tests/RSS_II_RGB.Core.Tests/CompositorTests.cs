@@ -48,6 +48,14 @@ public class CompositorTests
         => Assert.Equal(new Rgb(200, 200, 200), Compositor.Blend(new Rgb(200, 50, 200), new Rgb(50, 200, 100), BlendMode.Max));
 
     [Fact]
+    public void Blend_Over_BlackSourceIsTransparent()
+        => Assert.Equal(new Rgb(9, 9, 9), Compositor.Blend(new Rgb(9, 9, 9), Rgb.Black, BlendMode.Over));
+
+    [Fact]
+    public void Blend_Over_NonBlackSourceReplaces()
+        => Assert.Equal(new Rgb(1, 0, 0), Compositor.Blend(new Rgb(9, 9, 9), new Rgb(1, 0, 0), BlendMode.Over));
+
+    [Fact]
     public void Compose_SingleSolid_FillsFrame()
     {
         var comp = new Compositor();

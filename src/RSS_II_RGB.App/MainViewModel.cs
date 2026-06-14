@@ -52,23 +52,33 @@ internal sealed partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private double _audioSensitivity = 0.9;
 
-    // Global Audio overlay: spectrum vs three-region bars, and the bars multiplier.
+    // Global Audio overlay: spectrum vs three-region bars, with a per-region multiplier.
     [ObservableProperty]
     private AudioLayoutChoice _audioLayout = AudioLayoutChoice.Spectrum;
 
     [ObservableProperty]
-    private double _audioBarsMultiplier = 1.0;
+    private double _audioBarsBassMultiplier = 2.0;
+
+    [ObservableProperty]
+    private double _audioBarsMidMultiplier = 1.0;
+
+    [ObservableProperty]
+    private double _audioBarsTrebleMultiplier = 0.8;
 
     public AudioLayoutChoice[] AudioLayoutOptions { get; } =
     {
         AudioLayoutChoice.Spectrum, AudioLayoutChoice.Bars,
     };
 
-    /// <summary>True when the bars layout is selected (gates its multiplier slider).</summary>
+    /// <summary>True when the bars layout is selected (gates its multiplier sliders).</summary>
     public bool IsAudioBarsLayout => AudioLayout == AudioLayoutChoice.Bars;
 
-    public string AudioBarsMultiplierText =>
-        string.Format(CultureInfo.InvariantCulture, L.AudioBarsMultiplierFormat, AudioBarsMultiplier);
+    public string AudioBarsBassText =>
+        string.Format(CultureInfo.InvariantCulture, L.AudioBarsBassFormat, AudioBarsBassMultiplier);
+    public string AudioBarsMidText =>
+        string.Format(CultureInfo.InvariantCulture, L.AudioBarsMidFormat, AudioBarsMidMultiplier);
+    public string AudioBarsTrebleText =>
+        string.Format(CultureInfo.InvariantCulture, L.AudioBarsTrebleFormat, AudioBarsTrebleMultiplier);
 
     // System-metric overlay.
     [ObservableProperty]
@@ -169,7 +179,9 @@ internal sealed partial class MainViewModel : ObservableObject
         BrightnessPercent = s.BrightnessPercent;
         AudioSensitivity = s.AudioSensitivity;
         AudioLayout = s.AudioLayout;
-        AudioBarsMultiplier = s.AudioBarsMultiplier;
+        AudioBarsBassMultiplier = s.AudioBarsBassMultiplier;
+        AudioBarsMidMultiplier = s.AudioBarsMidMultiplier;
+        AudioBarsTrebleMultiplier = s.AudioBarsTrebleMultiplier;
         ShowMetrics = s.ShowMetrics;
         MetricLayout = s.MetricLayout;
         if (s.PercentThresholds.Length >= 3)
@@ -240,9 +252,21 @@ internal sealed partial class MainViewModel : ObservableObject
         Apply();
     }
 
-    partial void OnAudioBarsMultiplierChanged(double value)
+    partial void OnAudioBarsBassMultiplierChanged(double value)
     {
-        OnPropertyChanged(nameof(AudioBarsMultiplierText));
+        OnPropertyChanged(nameof(AudioBarsBassText));
+        Apply();
+    }
+
+    partial void OnAudioBarsMidMultiplierChanged(double value)
+    {
+        OnPropertyChanged(nameof(AudioBarsMidText));
+        Apply();
+    }
+
+    partial void OnAudioBarsTrebleMultiplierChanged(double value)
+    {
+        OnPropertyChanged(nameof(AudioBarsTrebleText));
         Apply();
     }
 
@@ -269,7 +293,9 @@ internal sealed partial class MainViewModel : ObservableObject
         _controller.EnableAudio = EnableAudio;
         _controller.AudioSensitivity = AudioSensitivity;
         _controller.AudioLayout = AudioLayout;
-        _controller.AudioBarsMultiplier = AudioBarsMultiplier;
+        _controller.AudioBarsBassMultiplier = AudioBarsBassMultiplier;
+        _controller.AudioBarsMidMultiplier = AudioBarsMidMultiplier;
+        _controller.AudioBarsTrebleMultiplier = AudioBarsTrebleMultiplier;
         _controller.ShowMetrics = ShowMetrics;
         _controller.MetricLayout = MetricLayout;
         _controller.PercentThresholds = percent;
@@ -286,7 +312,9 @@ internal sealed partial class MainViewModel : ObservableObject
         s.EnableAudio = EnableAudio;
         s.AudioSensitivity = AudioSensitivity;
         s.AudioLayout = AudioLayout;
-        s.AudioBarsMultiplier = AudioBarsMultiplier;
+        s.AudioBarsBassMultiplier = AudioBarsBassMultiplier;
+        s.AudioBarsMidMultiplier = AudioBarsMidMultiplier;
+        s.AudioBarsTrebleMultiplier = AudioBarsTrebleMultiplier;
         s.ShowMetrics = ShowMetrics;
         s.MetricLayout = MetricLayout;
         s.PercentThresholds = percent;

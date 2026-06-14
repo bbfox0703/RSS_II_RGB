@@ -42,8 +42,8 @@ already‑running window.
   - **Audio** — reacts to whatever is playing. Two mutually-exclusive layouts:
     a per-key **frequency spectrum** (sensitivity slider), or **three-region
     bars** — bass / mid / treble as horizontal VU bars across the Z, A and Tab
-    rows (the louder a band, the further its row fills), with its own 0.5–2×
-    multiplier.
+    rows (the louder a band, the further its row fills), with a separate
+    multiplier per region. Lit keys show clearly on top of any base effect.
 - **System metrics** — show CPU %, memory %, GPU % and GPU temperature as 1–4 lit
   cells (green→red) on a chosen key group. **No administrator rights needed.**
 - **Zone editor** — select keys (click or drag a box) and give them their own
