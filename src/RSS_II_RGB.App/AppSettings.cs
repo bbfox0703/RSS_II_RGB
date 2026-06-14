@@ -23,11 +23,11 @@ internal sealed class AppSettings
     [JsonConverter(typeof(JsonStringEnumConverter<AudioLayoutChoice>))]
     public AudioLayoutChoice AudioLayout { get; set; } = AudioLayoutChoice.Spectrum;
 
-    public double AudioBarsBassMultiplier { get; set; } = 2.0;
+    public double AudioBarsBassMultiplier { get; set; } = 0.9;
 
     public double AudioBarsMidMultiplier { get; set; } = 1.0;
 
-    public double AudioBarsTrebleMultiplier { get; set; } = 0.8;
+    public double AudioBarsTrebleMultiplier { get; set; } = 2.0;
 
     // System-metric overlay.
     public bool ShowMetrics { get; set; }

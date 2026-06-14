@@ -57,13 +57,13 @@ internal sealed partial class MainViewModel : ObservableObject
     private AudioLayoutChoice _audioLayout = AudioLayoutChoice.Spectrum;
 
     [ObservableProperty]
-    private double _audioBarsBassMultiplier = 2.0;
+    private double _audioBarsBassMultiplier = 0.9;
 
     [ObservableProperty]
     private double _audioBarsMidMultiplier = 1.0;
 
     [ObservableProperty]
-    private double _audioBarsTrebleMultiplier = 0.8;
+    private double _audioBarsTrebleMultiplier = 2.0;
 
     public AudioLayoutChoice[] AudioLayoutOptions { get; } =
     {

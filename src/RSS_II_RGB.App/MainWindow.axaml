@@ -52,15 +52,15 @@
 
             <TextBlock Text="{Binding AudioBarsBassText}" FontWeight="SemiBold"
                        IsVisible="{Binding IsAudioBarsLayout}"/>
-            <Slider Minimum="0.5" Maximum="2" Value="{Binding AudioBarsBassMultiplier}"
+            <Slider Minimum="0.3" Maximum="3" Value="{Binding AudioBarsBassMultiplier}"
                     IsEnabled="{Binding IsConnected}" IsVisible="{Binding IsAudioBarsLayout}"/>
             <TextBlock Text="{Binding AudioBarsMidText}" FontWeight="SemiBold"
                        IsVisible="{Binding IsAudioBarsLayout}"/>
-            <Slider Minimum="0.5" Maximum="2" Value="{Binding AudioBarsMidMultiplier}"
+            <Slider Minimum="0.3" Maximum="3" Value="{Binding AudioBarsMidMultiplier}"
                     IsEnabled="{Binding IsConnected}" IsVisible="{Binding IsAudioBarsLayout}"/>
             <TextBlock Text="{Binding AudioBarsTrebleText}" FontWeight="SemiBold"
                        IsVisible="{Binding IsAudioBarsLayout}"/>
-            <Slider Minimum="0.5" Maximum="2" Value="{Binding AudioBarsTrebleMultiplier}"
+            <Slider Minimum="0.3" Maximum="3" Value="{Binding AudioBarsTrebleMultiplier}"
                     IsEnabled="{Binding IsConnected}" IsVisible="{Binding IsAudioBarsLayout}"/>
 
             <TextBlock Text="{x:Static vm:L.ColourLabel}" FontWeight="SemiBold"/>

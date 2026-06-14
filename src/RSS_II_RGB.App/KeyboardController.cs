@@ -51,11 +51,11 @@ internal sealed class KeyboardController : IAsyncDisposable
     public double AudioSensitivity { get; set; } = 0.9;
 
     // Global Audio overlay layout (spectrum vs three-region bars) and the per-region
-    // bars multipliers (bass needs the most boost, treble the least).
+    // bars multipliers (treble needs the most boost, bass the least).
     public AudioLayoutChoice AudioLayout { get; set; } = AudioLayoutChoice.Spectrum;
-    public double AudioBarsBassMultiplier { get; set; } = 2.0;
+    public double AudioBarsBassMultiplier { get; set; } = 0.9;
     public double AudioBarsMidMultiplier { get; set; } = 1.0;
-    public double AudioBarsTrebleMultiplier { get; set; } = 0.8;
+    public double AudioBarsTrebleMultiplier { get; set; } = 2.0;
 
     // Independent global overlays, toggled from the main UI (set before SetGlobalEffect/SetZones).
     // Reactive is the higher-priority of the two: it sits above the zones, audio below them.
