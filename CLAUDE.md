@@ -45,4 +45,6 @@ Strix Scope II RGB display.
 
 ## Pointers
 
-put any pointer file here (e.g. `docs/`, `vendor/`) and link to it from the relevant rule above.
+- [`README.md`](README.md) — what the app is, features, requirements, build/run/publish, solution layout.
+- [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — design: software render loop, layered compositor, platform abstraction, AOT, the non-AOT `SensorsHost` IPC seam.
+- [`vendor/`](vendor/) — read-only dependency clones (rule 8); recreate with `vendor/update_vendors.ps1`.
