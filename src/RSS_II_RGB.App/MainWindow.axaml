@@ -3,6 +3,7 @@
         xmlns:vm="using:RSS_II_RGB.App"
         x:Class="RSS_II_RGB.App.MainWindow"
         x:DataType="vm:MainViewModel"
+        Icon="/Assets/Mainicon.ico"
         Title="Strix Scope II RGB"
         Width="540" Height="640"
         MinWidth="460" MinHeight="420"

@@ -15,7 +15,14 @@
     <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
+    <!-- Windows .exe / taskbar icon. -->
+    <ApplicationIcon>Assets\Mainicon.ico</ApplicationIcon>
   </PropertyGroup>
+
+  <!-- App assets (window icon etc.) embedded as Avalonia resources. -->
+  <ItemGroup>
+    <AvaloniaResource Include="Assets\**" />
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Avalonia" Version="11.3.17" />
