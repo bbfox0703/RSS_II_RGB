@@ -36,6 +36,9 @@ internal sealed class ZoneSetting
     public EffectChoice Effect { get; set; } = EffectChoice.Solid;
 
     public string ColorHex { get; set; } = "FFFFFF";
+
+    [JsonConverter(typeof(JsonStringEnumConverter<AudioZoneMode>))]
+    public AudioZoneMode AudioMode { get; set; } = AudioZoneMode.Spectrum;
 }
 
 // Source-generated, reflection-free JSON (CLAUDE.md rule 5).

@@ -112,7 +112,7 @@ internal sealed class KeyboardController : IAsyncDisposable
                 continue;
             }
             KeyMask mask = KeyMask.FromIndices(zone.KeyIndices is int[] arr ? arr : zone.KeyIndices.ToArray());
-            AddEffectLayers(layers, $"zone-{z}", zone.Effect, zone.Color, mask, baseZ: z);
+            AddEffectLayers(layers, $"zone-{z}", zone.Effect, zone.Color, mask, baseZ: z, zone.AudioMode);
             z += 100;
         }
 
@@ -138,7 +138,8 @@ internal sealed class KeyboardController : IAsyncDisposable
     // global-only (its overlays don't yet honour a mask), so a Reactive zone falls
     // back to its dim base.
     private void AddEffectLayers(List<IEffectLayer> layers, string id, EffectChoice effect,
-                                 Rgb color, KeyMask mask, int baseZ)
+                                 Rgb color, KeyMask mask, int baseZ,
+                                 AudioZoneMode audioMode = AudioZoneMode.Spectrum)
     {
         switch (effect)
         {
@@ -170,7 +171,20 @@ internal sealed class KeyboardController : IAsyncDisposable
                 layers.Add(new TempIndicatorLayer(id, _sensors, gpu: true, mask, zOrder: baseZ));
                 break;
             case EffectChoice.Audio:
-                layers.Add(new AudioReactiveLayer(id, _sensors, mask, sensitivity: AudioSensitivity, zOrder: baseZ));
+                switch (audioMode)
+                {
+                    case AudioZoneMode.SolidColor:
+                        layers.Add(new AudioVolumeLayer(id, _sensors, mask, color, rainbow: false,
+                                                        sensitivity: AudioSensitivity, zOrder: baseZ));
+                        break;
+                    case AudioZoneMode.SolidRainbow:
+                        layers.Add(new AudioVolumeLayer(id, _sensors, mask, Rgb.White, rainbow: true,
+                                                        sensitivity: AudioSensitivity, zOrder: baseZ));
+                        break;
+                    default:
+                        layers.Add(new AudioReactiveLayer(id, _sensors, mask, sensitivity: AudioSensitivity, zOrder: baseZ));
+                        break;
+                }
                 break;
         }
     }

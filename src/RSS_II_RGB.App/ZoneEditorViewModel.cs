@@ -49,14 +49,27 @@ internal sealed partial class ZoneEditorViewModel : ObservableObject
     public EffectChoice[] ZoneEffects { get; } =
     {
         EffectChoice.Solid, EffectChoice.Breathing, EffectChoice.Rainbow,
-        EffectChoice.Wave, EffectChoice.Off,
+        EffectChoice.Wave, EffectChoice.Audio, EffectChoice.Off,
+    };
+
+    public AudioZoneMode[] AudioModeOptions { get; } =
+    {
+        AudioZoneMode.Spectrum, AudioZoneMode.SolidColor, AudioZoneMode.SolidRainbow,
     };
 
     [ObservableProperty]
     private EffectChoice _zoneEffect = EffectChoice.Solid;
 
     [ObservableProperty]
+    private AudioZoneMode _selectedAudioMode = AudioZoneMode.Spectrum;
+
+    [ObservableProperty]
     private Color _zoneColor = Colors.Cyan;
+
+    /// <summary>True when the Audio effect is selected, so the mode picker shows.</summary>
+    public bool IsAudioMode => ZoneEffect == EffectChoice.Audio;
+
+    partial void OnZoneEffectChanged(EffectChoice value) => OnPropertyChanged(nameof(IsAudioMode));
 
     // The keys occupy CanvasWidth x CanvasHeight; the host adds EdgePad all round.
     public double CanvasWidth => ScopeIILayout.Cols * CellStride;
@@ -99,7 +112,8 @@ internal sealed partial class ZoneEditorViewModel : ObservableObject
             return;
         }
 
-        var zone = new Zone(selected.ToArray(), ZoneEffect, new Rgb(ZoneColor.R, ZoneColor.G, ZoneColor.B));
+        var zone = new Zone(selected.ToArray(), ZoneEffect,
+                            new Rgb(ZoneColor.R, ZoneColor.G, ZoneColor.B), SelectedAudioMode);
         _zones.Add(zone);
         AddRow(zone);
         Push();
@@ -128,7 +142,10 @@ internal sealed partial class ZoneEditorViewModel : ObservableObject
     private void SelectNone() => ClearSelection();
 
     private void AddRow(Zone zone)
-        => ZoneRows.Add(new ZoneRowVM($"{zone.Effect} on {zone.KeyIndices.Count} key(s)", RemoveRow));
+    {
+        string label = zone.Effect == EffectChoice.Audio ? $"Audio · {zone.AudioMode}" : zone.Effect.ToString();
+        ZoneRows.Add(new ZoneRowVM($"{label} on {zone.KeyIndices.Count} key(s)", RemoveRow));
+    }
 
     private void RemoveRow(ZoneRowVM row)
     {

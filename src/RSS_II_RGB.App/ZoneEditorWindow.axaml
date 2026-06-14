@@ -58,6 +58,9 @@
                 <WrapPanel>
                     <TextBlock Text="Zone effect" VerticalAlignment="Center" Margin="0,0,6,6"/>
                     <ComboBox ItemsSource="{Binding ZoneEffects}" SelectedItem="{Binding ZoneEffect}" Width="120" Margin="0,0,14,6"/>
+                    <ComboBox ItemsSource="{Binding AudioModeOptions}" SelectedItem="{Binding SelectedAudioMode}"
+                              Width="130" Margin="0,0,14,6" IsVisible="{Binding IsAudioMode}"
+                              ToolTip.Tip="Audio zone mode"/>
                     <TextBlock Text="Colour" VerticalAlignment="Center" Margin="0,0,6,6"/>
                     <ColorPicker Color="{Binding ZoneColor}" Margin="0,0,14,6"/>
                     <Button Content="Assign to selection" Command="{Binding AssignZoneCommand}" Margin="0,0,6,6"/>

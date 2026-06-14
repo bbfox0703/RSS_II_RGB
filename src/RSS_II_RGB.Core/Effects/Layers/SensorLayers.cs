@@ -99,3 +99,52 @@ public sealed class AudioReactiveLayer : IEffectLayer
     }
 }
 
+/// <summary>
+/// Lights its whole masked area at a brightness driven by overall audio loudness
+/// (the peak band). The colour is either a fixed colour or a slow time-cycling
+/// rainbow. Black when silent.
+/// </summary>
+public sealed class AudioVolumeLayer : IEffectLayer
+{
+    private readonly SensorState _state;
+    private readonly Rgb _color;
+    private readonly bool _rainbow;
+    private readonly double _sensitivity;
+    private readonly double[] _bands = new double[64];
+
+    public AudioVolumeLayer(string id, SensorState state, KeyMask mask, Rgb color, bool rainbow,
+                            double sensitivity = 1.0, int zOrder = 0)
+    {
+        Id = id;
+        _state = state;
+        Mask = mask;
+        _color = color;
+        _rainbow = rainbow;
+        _sensitivity = sensitivity;
+        ZOrder = zOrder;
+    }
+
+    public string Id { get; }
+    public int ZOrder { get; }
+    public BlendMode Blend => BlendMode.Normal;
+    public KeyMask Mask { get; }
+    public bool IsComplete => false;
+
+    public void Render(Span<Rgb> target, in EffectContext ctx)
+    {
+        int n = _state.CopyAudioBands(_bands);
+        double volume = 0;
+        for (int i = 0; i < n; i++)
+        {
+            volume = Math.Max(volume, _bands[i]);
+        }
+        volume = Math.Clamp(volume * _sensitivity, 0, 1);
+
+        Rgb color = _rainbow
+            ? Rgb.FromHsv(ctx.Elapsed.TotalSeconds * 0.2, 1, 1)
+            : _color;
+
+        target.Fill(color.Scale((float)volume));
+    }
+}
+
