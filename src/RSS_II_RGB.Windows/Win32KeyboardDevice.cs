@@ -10,8 +10,9 @@ using RSS_II_RGB.Windows.Interop;
 namespace RSS_II_RGB.Windows;
 
 /// <summary>
-/// Finds the Strix Scope II RX vendor control interface (usage page 0xFF00,
-/// interface 1) by walking the HID device interfaces with SetupAPI, and opens it.
+/// Finds a supported Strix Scope II keyboard's vendor control interface (usage
+/// page 0xFF00, interface 1) by walking the HID device interfaces with SetupAPI,
+/// and opens it. See <see cref="WindowsConstants.ProductIdTokens"/> for the PIDs.
 /// </summary>
 public sealed class Win32KeyboardDeviceFactory : IKeyboardDeviceFactory
 {
@@ -70,7 +71,7 @@ public sealed class Win32KeyboardDeviceFactory : IKeyboardDeviceFactory
 
                 // Cheap path-token filter before opening anything.
                 if (!ContainsToken(path, WindowsConstants.VendorIdToken) ||
-                    !ContainsToken(path, WindowsConstants.ProductIdToken) ||
+                    !MatchesAnyProductId(path) ||
                     !ContainsToken(path, WindowsConstants.ControlInterfaceToken))
                 {
                     continue;
@@ -153,6 +154,19 @@ public sealed class Win32KeyboardDeviceFactory : IKeyboardDeviceFactory
 
     private static bool ContainsToken(string path, string token)
         => path.Contains(token, StringComparison.OrdinalIgnoreCase);
+
+    // True when the path names any supported keyboard PID.
+    private static bool MatchesAnyProductId(string path)
+    {
+        foreach (string token in WindowsConstants.ProductIdTokens)
+        {
+            if (ContainsToken(path, token))
+            {
+                return true;
+            }
+        }
+        return false;
+    }
 }
 
 /// <summary>

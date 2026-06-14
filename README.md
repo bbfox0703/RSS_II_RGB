@@ -7,7 +7,9 @@ effect layers and streams each frame to the keyboard over the vendor HID
 "Direct" command.
 
 > Built and hardware-verified on a Strix Scope II **RX** (VID `0x0B05`, PID
-> `0x1AB5`), ANSI/US layout, firmware `01.00.13`.
+> `0x1AB5`), ANSI/US layout, firmware `01.00.13`. The Strix Scope II **NX**
+> (PID `0x1AB3`) shares the identical 107-LED ANSI layout and Direct protocol
+> and is also detected, but is **untested on hardware**.
 
 ## Features
 
