@@ -45,6 +45,11 @@ jobs:
         with:
           dotnet-version: '10.0.x'
 
+      # Restore the whole solution so the SensorsHost helper (built by a custom
+      # target in the App, not a ProjectReference) has its NuGet assets.
+      - name: Restore
+        run: dotnet restore RSS_II_RGB.slnx
+
       - name: Publish (Native AOT, win-x64)
         run: dotnet publish src/RSS_II_RGB.App -r win-x64 -c Release -o publish
 
