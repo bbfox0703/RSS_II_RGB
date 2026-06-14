@@ -5,6 +5,7 @@ using RSS_II_RGB.Core.Engine;
 using RSS_II_RGB.Core.Input;
 using RSS_II_RGB.Core.Logging;
 using RSS_II_RGB.Core.Rendering;
+using RSS_II_RGB.Core.Sensors;
 using RSS_II_RGB.Windows;
 
 namespace RSS_II_RGB.App;
@@ -17,6 +18,7 @@ namespace RSS_II_RGB.App;
 internal sealed class KeyboardController : IAsyncDisposable
 {
     private readonly ILogSink _log;
+    private readonly SensorState _sensors;
     private IKeyboardDevice? _device;
     private Win32KeyboardHook? _hook;
     private RenderEngine? _engine;
@@ -29,7 +31,11 @@ internal sealed class KeyboardController : IAsyncDisposable
     private double _brightness = 1.0;
     private IReadOnlyList<Zone> _zones = Array.Empty<Zone>();
 
-    public KeyboardController(ILogSink log) => _log = log;
+    public KeyboardController(ILogSink log, SensorState sensors)
+    {
+        _log = log;
+        _sensors = sensors;
+    }
 
     public bool IsRunning { get; private set; }
     public string Firmware { get; private set; } = "";
@@ -115,8 +121,8 @@ internal sealed class KeyboardController : IAsyncDisposable
     // Maps an effect choice to its layer(s), masked to the given keys. Reactive is
     // global-only (its overlays don't yet honour a mask), so a Reactive zone falls
     // back to its dim base.
-    private static void AddEffectLayers(List<IEffectLayer> layers, string id, EffectChoice effect,
-                                        Rgb color, KeyMask mask, int baseZ)
+    private void AddEffectLayers(List<IEffectLayer> layers, string id, EffectChoice effect,
+                                 Rgb color, KeyMask mask, int baseZ)
     {
         switch (effect)
         {
@@ -140,6 +146,12 @@ internal sealed class KeyboardController : IAsyncDisposable
                 layers.Add(new KeypressFadeLayer($"{id}-fade", Rgb.White, fadeSeconds: 0.6, zOrder: baseZ + 10));
                 layers.Add(new RippleLayer($"{id}-ripple", new Rgb(0, 180, 255), speedGridPerSec: 14,
                                            width: 1.3, fadeSeconds: 0.8, zOrder: baseZ + 20));
+                break;
+            case EffectChoice.CpuTemp:
+                layers.Add(new TempIndicatorLayer(id, _sensors, gpu: false, mask, zOrder: baseZ));
+                break;
+            case EffectChoice.GpuTemp:
+                layers.Add(new TempIndicatorLayer(id, _sensors, gpu: true, mask, zOrder: baseZ));
                 break;
         }
     }

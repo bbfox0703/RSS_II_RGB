@@ -37,6 +37,7 @@ internal sealed partial class MainViewModel : ObservableObject
     {
         EffectChoice.Off, EffectChoice.Solid, EffectChoice.Breathing,
         EffectChoice.Rainbow, EffectChoice.Wave, EffectChoice.Reactive,
+        EffectChoice.CpuTemp, EffectChoice.GpuTemp,
     };
 
     public MainViewModel(KeyboardController controller, SettingsService settings)

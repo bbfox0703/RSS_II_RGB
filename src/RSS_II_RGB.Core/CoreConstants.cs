@@ -32,4 +32,8 @@ public static class CoreConstants
 
     // ----- Render loop -----
     public const int DefaultTargetFps = 40; // device sustains ~42 FPS
+
+    // ----- IPC -----
+    // Named pipe between the main app and the non-AOT SensorsHost helper.
+    public const string SensorPipeName = "RSS_II_RGB.sensors";
 }

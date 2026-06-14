@@ -9,4 +9,6 @@ internal enum EffectChoice
     Rainbow,
     Wave,
     Reactive,
+    CpuTemp,
+    GpuTemp,
 }

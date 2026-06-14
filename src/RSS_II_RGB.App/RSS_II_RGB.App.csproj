@@ -35,4 +35,25 @@
     <ProjectReference Include="..\RSS_II_RGB.Windows\RSS_II_RGB.Windows.csproj" />
   </ItemGroup>
 
+  <!--
+    The SensorsHost is a separate non-AOT process (not referenced — it must NOT be
+    linked into the AOT app). Build it and copy its FULL output (incl. the managed
+    .dll) into a sensorshost\ subfolder next to the app, where SensorService finds it.
+  -->
+  <Target Name="BuildAndCopySensorsHost" AfterTargets="Build;Publish">
+    <MSBuild Projects="..\RSS_II_RGB.SensorsHost\RSS_II_RGB.SensorsHost.csproj"
+             Targets="Build" Properties="Configuration=$(Configuration)"
+             RemoveProperties="RuntimeIdentifier;RuntimeIdentifiers;SelfContained;PublishAot;PublishTrimmed;PublishSingleFile" />
+    <ItemGroup>
+      <_SensorsHostFiles Include="..\RSS_II_RGB.SensorsHost\bin\$(Configuration)\net10.0-windows\**\*.*" />
+    </ItemGroup>
+    <Copy SourceFiles="@(_SensorsHostFiles)"
+          DestinationFolder="$(OutDir)sensorshost\%(RecursiveDir)"
+          SkipUnchangedFiles="true" />
+    <Copy Condition="'$(PublishDir)' != ''"
+          SourceFiles="@(_SensorsHostFiles)"
+          DestinationFolder="$(PublishDir)sensorshost\%(RecursiveDir)"
+          SkipUnchangedFiles="true" />
+  </Target>
+
 </Project>
