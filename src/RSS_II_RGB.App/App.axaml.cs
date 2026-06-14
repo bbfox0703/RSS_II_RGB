@@ -17,7 +17,8 @@ public partial class App : Application
         {
             var log = new RotatingFileLogSink();
             _controller = new KeyboardController(log);
-            var viewModel = new MainViewModel(_controller);
+            var settings = new SettingsService();
+            var viewModel = new MainViewModel(_controller, settings);
 
             desktop.MainWindow = new MainWindow { DataContext = viewModel };
             desktop.ShutdownRequested += OnShutdownRequested;

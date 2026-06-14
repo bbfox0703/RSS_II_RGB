@@ -34,6 +34,7 @@ internal sealed class KeyboardController : IAsyncDisposable
     public bool IsRunning { get; private set; }
     public string Firmware { get; private set; } = "";
     public int LayoutId { get; private set; } = -1;
+    public IReadOnlyList<Zone> Zones => _zones;
 
     public async Task<bool> StartAsync()
     {

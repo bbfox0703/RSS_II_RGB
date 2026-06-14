@@ -8,9 +8,27 @@ using RSS_II_RGB.Core.Rendering;
 
 namespace RSS_II_RGB.App;
 
+/// <summary>One row in the zones list, with its own remove command.</summary>
+internal sealed partial class ZoneRowVM : ObservableObject
+{
+    private readonly Action<ZoneRowVM> _remove;
+
+    public ZoneRowVM(string summary, Action<ZoneRowVM> remove)
+    {
+        Summary = summary;
+        _remove = remove;
+    }
+
+    public string Summary { get; }
+
+    [RelayCommand]
+    private void Remove() => _remove(this);
+}
+
 /// <summary>
 /// The zone editor: select keys on the visual keyboard, assign an effect + colour
-/// to the selection, and layer those zones on top of the global effect.
+/// to the selection, and layer those zones on top of the global effect. Zones are
+/// persisted and restored via <see cref="SettingsService"/>.
 /// </summary>
 internal sealed partial class ZoneEditorViewModel : ObservableObject
 {
@@ -21,10 +39,11 @@ internal sealed partial class ZoneEditorViewModel : ObservableObject
     public const double EdgePad = 22;
 
     private readonly KeyboardController _controller;
+    private readonly SettingsService _settings;
     private readonly List<Zone> _zones = new();
 
     public ObservableCollection<KeyVM> Keys { get; } = new();
-    public ObservableCollection<string> ZoneSummaries { get; } = new();
+    public ObservableCollection<ZoneRowVM> ZoneRows { get; } = new();
 
     // Reactive is global-only for now, so it isn't offered per zone.
     public EffectChoice[] ZoneEffects { get; } =
@@ -46,12 +65,21 @@ internal sealed partial class ZoneEditorViewModel : ObservableObject
     public double HostHeight => CanvasHeight + 2 * EdgePad;
     public Thickness KeysMargin => new(EdgePad);
 
-    public ZoneEditorViewModel(KeyboardController controller)
+    public ZoneEditorViewModel(KeyboardController controller, SettingsService settings)
     {
         _controller = controller;
+        _settings = settings;
+
         foreach (LedKey key in ScopeIILayout.Keys)
         {
             Keys.Add(new KeyVM(key.Index, key.Name, key.Col * CellStride, key.Row * CellStride));
+        }
+
+        // Reflect any restored zones.
+        foreach (Zone zone in _controller.Zones)
+        {
+            _zones.Add(zone);
+            AddRow(zone);
         }
     }
 
@@ -71,9 +99,10 @@ internal sealed partial class ZoneEditorViewModel : ObservableObject
             return;
         }
 
-        _zones.Add(new Zone(selected.ToArray(), ZoneEffect, new Rgb(ZoneColor.R, ZoneColor.G, ZoneColor.B)));
-        _controller.SetZones(_zones.ToArray());
-        ZoneSummaries.Add($"{ZoneEffect} on {selected.Count} key(s)");
+        var zone = new Zone(selected.ToArray(), ZoneEffect, new Rgb(ZoneColor.R, ZoneColor.G, ZoneColor.B));
+        _zones.Add(zone);
+        AddRow(zone);
+        Push();
         ClearSelection();
     }
 
@@ -81,8 +110,8 @@ internal sealed partial class ZoneEditorViewModel : ObservableObject
     private void ClearZones()
     {
         _zones.Clear();
-        ZoneSummaries.Clear();
-        _controller.SetZones(Array.Empty<Zone>());
+        ZoneRows.Clear();
+        Push();
         ClearSelection();
     }
 
@@ -97,6 +126,28 @@ internal sealed partial class ZoneEditorViewModel : ObservableObject
 
     [RelayCommand]
     private void SelectNone() => ClearSelection();
+
+    private void AddRow(Zone zone)
+        => ZoneRows.Add(new ZoneRowVM($"{zone.Effect} on {zone.KeyIndices.Count} key(s)", RemoveRow));
+
+    private void RemoveRow(ZoneRowVM row)
+    {
+        int index = ZoneRows.IndexOf(row);
+        if (index < 0)
+        {
+            return;
+        }
+        ZoneRows.RemoveAt(index);
+        _zones.RemoveAt(index);
+        Push();
+    }
+
+    private void Push()
+    {
+        _controller.SetZones(_zones.ToArray());
+        _settings.Settings.Zones = _zones.Select(ZoneMapping.ToSetting).ToList();
+        _settings.Save();
+    }
 
     private void ClearSelection()
     {

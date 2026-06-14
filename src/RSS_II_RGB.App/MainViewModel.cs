@@ -13,7 +13,9 @@ namespace RSS_II_RGB.App;
 internal sealed partial class MainViewModel : ObservableObject
 {
     private readonly KeyboardController _controller;
+    private readonly SettingsService _settings;
     private bool _ready;
+    private bool _loading;
 
     [ObservableProperty]
     private string _statusText = "Connecting…";
@@ -27,8 +29,7 @@ internal sealed partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private double _brightnessPercent = 100;
 
-    // Single source of truth for the effect colour (driven by the ColorPicker
-    // and the preset swatch buttons).
+    // Single source of truth for the effect colour (ColorPicker + preset swatches).
     [ObservableProperty]
     private Color _pickedColor = Color.FromRgb(0x00, 0xFF, 0x66);
 
@@ -38,10 +39,17 @@ internal sealed partial class MainViewModel : ObservableObject
         EffectChoice.Rainbow, EffectChoice.Wave, EffectChoice.Reactive,
     };
 
-    public MainViewModel(KeyboardController controller) => _controller = controller;
+    public MainViewModel(KeyboardController controller, SettingsService settings)
+    {
+        _controller = controller;
+        _settings = settings;
+    }
 
     /// <summary>The shared controller, handed to the zone editor.</summary>
     public KeyboardController Controller => _controller;
+
+    /// <summary>The shared settings store, handed to the zone editor.</summary>
+    public SettingsService Settings => _settings;
 
     public async Task InitializeAsync()
     {
@@ -51,10 +59,24 @@ internal sealed partial class MainViewModel : ObservableObject
             ? $"Connected — Scope II RX, firmware {_controller.Firmware}"
             : "Keyboard not found. Close Armoury Crate / OpenRGB, then restart.";
         _ready = ok;
-        if (ok)
+        if (!ok)
         {
-            Apply();
+            return;
         }
+
+        // Restore the saved setup.
+        _loading = true;
+        AppSettings s = _settings.Settings;
+        SelectedEffect = s.GlobalEffect;
+        if (TryParseColor(s.GlobalColorHex, out Color color))
+        {
+            PickedColor = color;
+        }
+        BrightnessPercent = s.BrightnessPercent;
+        _loading = false;
+
+        _controller.SetZones(s.Zones.Select(ZoneMapping.ToZone).ToArray());
+        Apply();
     }
 
     [RelayCommand]
@@ -74,12 +96,19 @@ internal sealed partial class MainViewModel : ObservableObject
 
     private void Apply()
     {
-        if (!_ready)
+        if (!_ready || _loading)
         {
             return;
         }
+
         var rgb = new Rgb(PickedColor.R, PickedColor.G, PickedColor.B);
         _controller.SetGlobalEffect(SelectedEffect, rgb, BrightnessPercent / 100.0);
+
+        AppSettings s = _settings.Settings;
+        s.GlobalEffect = SelectedEffect;
+        s.GlobalColorHex = $"{PickedColor.R:X2}{PickedColor.G:X2}{PickedColor.B:X2}";
+        s.BrightnessPercent = BrightnessPercent;
+        _settings.Save();
     }
 
     private static bool TryParseColor(string s, out Color color)

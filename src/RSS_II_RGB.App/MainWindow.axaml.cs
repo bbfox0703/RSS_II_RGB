@@ -11,7 +11,7 @@ public partial class MainWindow : Window
     {
         if (DataContext is MainViewModel vm)
         {
-            var editor = new ZoneEditorWindow { DataContext = new ZoneEditorViewModel(vm.Controller) };
+            var editor = new ZoneEditorWindow { DataContext = new ZoneEditorViewModel(vm.Controller, vm.Settings) };
             editor.Show(this);
         }
     }

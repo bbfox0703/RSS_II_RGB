@@ -76,10 +76,14 @@
                 BorderBrush="#33888888" BorderThickness="1" CornerRadius="4" Padding="10">
             <StackPanel>
                 <TextBlock Text="Zones" FontWeight="SemiBold" Margin="0,0,0,8"/>
-                <ItemsControl ItemsSource="{Binding ZoneSummaries}">
+                <ItemsControl ItemsSource="{Binding ZoneRows}">
                     <ItemsControl.ItemTemplate>
-                        <DataTemplate x:DataType="sys:String">
-                            <TextBlock Text="{Binding}" Margin="0,3"/>
+                        <DataTemplate x:DataType="vm:ZoneRowVM">
+                            <Grid ColumnDefinitions="*,Auto" Margin="0,3">
+                                <TextBlock Text="{Binding Summary}" VerticalAlignment="Center"/>
+                                <Button Grid.Column="1" Content="✕" Command="{Binding RemoveCommand}"
+                                        Padding="6,1" Margin="6,0,0,0" FontSize="11"/>
+                            </Grid>
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
