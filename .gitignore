@@ -432,3 +432,7 @@ FodyWeavers.xsd
 # (CLAUDE.md rule 8: clones, not submodules). The script is tracked; clones are not.
 /vendor/*
 !/vendor/update_vendors.ps1
+
+# build.cmd / build.ps1 outputs
+/dist/
+/build_log.txt
