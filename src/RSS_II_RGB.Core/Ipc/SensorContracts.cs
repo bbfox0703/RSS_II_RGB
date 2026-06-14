@@ -8,6 +8,9 @@ public enum SensorKind
     CpuTemp,
     GpuTemp,
     AudioBands,
+    CpuUtil,
+    MemUtil,
+    GpuUtil,
 }
 
 /// <summary>

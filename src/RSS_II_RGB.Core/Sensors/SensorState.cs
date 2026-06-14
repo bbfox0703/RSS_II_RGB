@@ -12,6 +12,9 @@ public sealed class SensorState
     private readonly object _gate = new();
     private double _cpuTemp = double.NaN;
     private double _gpuTemp = double.NaN;
+    private double _cpuUtil = double.NaN;
+    private double _memUtil = double.NaN;
+    private double _gpuUtil = double.NaN;
     private double[] _audioBands = Array.Empty<double>();
 
     public void Apply(SensorSample sample)
@@ -25,6 +28,15 @@ public sealed class SensorState
                     break;
                 case SensorKind.GpuTemp:
                     if (sample.Values.Length > 0) _gpuTemp = sample.Values[0];
+                    break;
+                case SensorKind.CpuUtil:
+                    if (sample.Values.Length > 0) _cpuUtil = sample.Values[0];
+                    break;
+                case SensorKind.MemUtil:
+                    if (sample.Values.Length > 0) _memUtil = sample.Values[0];
+                    break;
+                case SensorKind.GpuUtil:
+                    if (sample.Values.Length > 0) _gpuUtil = sample.Values[0];
                     break;
                 case SensorKind.AudioBands:
                     _audioBands = sample.Values;
@@ -41,6 +53,21 @@ public sealed class SensorState
     public double GpuTemp
     {
         get { lock (_gate) { return _gpuTemp; } }
+    }
+
+    public double CpuUtil
+    {
+        get { lock (_gate) { return _cpuUtil; } }
+    }
+
+    public double MemUtil
+    {
+        get { lock (_gate) { return _memUtil; } }
+    }
+
+    public double GpuUtil
+    {
+        get { lock (_gate) { return _gpuUtil; } }
     }
 
     /// <summary>Copy the latest audio band magnitudes into <paramref name="dest"/>; returns the count copied.</summary>

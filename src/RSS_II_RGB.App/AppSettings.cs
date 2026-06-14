@@ -14,6 +14,16 @@ internal sealed class AppSettings
 
     public double AudioSensitivity { get; set; } = 1.5;
 
+    // System-metric overlay.
+    public bool ShowMetrics { get; set; }
+
+    [JsonConverter(typeof(JsonStringEnumConverter<MetricLayoutChoice>))]
+    public MetricLayoutChoice MetricLayout { get; set; } = MetricLayoutChoice.FunctionRow;
+
+    public double[] PercentThresholds { get; set; } = { 30, 60, 90 };
+
+    public double[] TempThresholds { get; set; } = { 55, 65, 75 };
+
     public List<ZoneSetting> Zones { get; set; } = new();
 }
 

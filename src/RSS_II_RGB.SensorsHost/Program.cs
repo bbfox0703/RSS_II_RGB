@@ -14,7 +14,7 @@ internal static class Program
 {
     private static readonly ISensorProvider[] Providers =
     {
-        new SyntheticTempProvider(),
+        new SystemMetricsProvider(),
         new AudioProvider(),
     };
 

@@ -56,16 +56,15 @@ internal sealed class SensorService : IAsyncDisposable
 
     private async Task PumpAsync(ISensorFeed feed, CancellationToken ct)
     {
-        bool first = true;
+        var seenKinds = new HashSet<SensorKind>();
         try
         {
             await foreach (SensorSample sample in feed.ReadAsync(ct))
             {
                 _state.Apply(sample);
-                if (first)
+                if (sample.Kind != SensorKind.AudioBands && seenKinds.Add(sample.Kind))
                 {
-                    first = false;
-                    _log.Log(LogLevel.Info, "Sensor feed connected.");
+                    _log.Log(LogLevel.Info, $"{sample.Kind} = {sample.Values.FirstOrDefault():F1}");
                 }
             }
         }

@@ -33,6 +33,31 @@ internal sealed partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private double _audioSensitivity = 1.5;
 
+    // System-metric overlay.
+    [ObservableProperty]
+    private bool _showMetrics;
+
+    [ObservableProperty]
+    private MetricLayoutChoice _metricLayout = MetricLayoutChoice.FunctionRow;
+
+    [ObservableProperty]
+    private decimal _pct1 = 30;
+    [ObservableProperty]
+    private decimal _pct2 = 60;
+    [ObservableProperty]
+    private decimal _pct3 = 90;
+    [ObservableProperty]
+    private decimal _temp1 = 55;
+    [ObservableProperty]
+    private decimal _temp2 = 65;
+    [ObservableProperty]
+    private decimal _temp3 = 75;
+
+    public MetricLayoutChoice[] MetricLayoutOptions { get; } =
+    {
+        MetricLayoutChoice.FunctionRow, MetricLayoutChoice.Numpad, MetricLayoutChoice.Diagonal,
+    };
+
     // Single source of truth for the effect colour (ColorPicker + preset swatches).
     [ObservableProperty]
     private Color _pickedColor = Color.FromRgb(0x00, 0xFF, 0x66);
@@ -79,6 +104,20 @@ internal sealed partial class MainViewModel : ObservableObject
         }
         BrightnessPercent = s.BrightnessPercent;
         AudioSensitivity = s.AudioSensitivity;
+        ShowMetrics = s.ShowMetrics;
+        MetricLayout = s.MetricLayout;
+        if (s.PercentThresholds.Length >= 3)
+        {
+            Pct1 = (decimal)s.PercentThresholds[0];
+            Pct2 = (decimal)s.PercentThresholds[1];
+            Pct3 = (decimal)s.PercentThresholds[2];
+        }
+        if (s.TempThresholds.Length >= 3)
+        {
+            Temp1 = (decimal)s.TempThresholds[0];
+            Temp2 = (decimal)s.TempThresholds[1];
+            Temp3 = (decimal)s.TempThresholds[2];
+        }
         _loading = false;
 
         _controller.SetZones(s.Zones.Select(ZoneMapping.ToZone).ToArray());
@@ -102,6 +141,15 @@ internal sealed partial class MainViewModel : ObservableObject
 
     partial void OnAudioSensitivityChanged(double value) => Apply();
 
+    partial void OnShowMetricsChanged(bool value) => Apply();
+    partial void OnMetricLayoutChanged(MetricLayoutChoice value) => Apply();
+    partial void OnPct1Changed(decimal value) => Apply();
+    partial void OnPct2Changed(decimal value) => Apply();
+    partial void OnPct3Changed(decimal value) => Apply();
+    partial void OnTemp1Changed(decimal value) => Apply();
+    partial void OnTemp2Changed(decimal value) => Apply();
+    partial void OnTemp3Changed(decimal value) => Apply();
+
     private void Apply()
     {
         if (!_ready || _loading)
@@ -109,7 +157,15 @@ internal sealed partial class MainViewModel : ObservableObject
             return;
         }
 
+        double[] percent = { (double)Pct1, (double)Pct2, (double)Pct3 };
+        double[] temp = { (double)Temp1, (double)Temp2, (double)Temp3 };
+
         _controller.AudioSensitivity = AudioSensitivity;
+        _controller.ShowMetrics = ShowMetrics;
+        _controller.MetricLayout = MetricLayout;
+        _controller.PercentThresholds = percent;
+        _controller.TempThresholds = temp;
+
         var rgb = new Rgb(PickedColor.R, PickedColor.G, PickedColor.B);
         _controller.SetGlobalEffect(SelectedEffect, rgb, BrightnessPercent / 100.0);
 
@@ -118,6 +174,10 @@ internal sealed partial class MainViewModel : ObservableObject
         s.GlobalColorHex = $"{PickedColor.R:X2}{PickedColor.G:X2}{PickedColor.B:X2}";
         s.BrightnessPercent = BrightnessPercent;
         s.AudioSensitivity = AudioSensitivity;
+        s.ShowMetrics = ShowMetrics;
+        s.MetricLayout = MetricLayout;
+        s.PercentThresholds = percent;
+        s.TempThresholds = temp;
         _settings.Save();
     }
 

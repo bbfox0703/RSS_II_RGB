@@ -45,6 +45,12 @@ internal sealed class KeyboardController : IAsyncDisposable
     /// <summary>Brightness multiplier for the audio visualiser (set before SetGlobalEffect).</summary>
     public double AudioSensitivity { get; set; } = 1.5;
 
+    // System-metric overlay configuration (set before SetGlobalEffect/SetZones).
+    public bool ShowMetrics { get; set; }
+    public MetricLayoutChoice MetricLayout { get; set; } = MetricLayoutChoice.FunctionRow;
+    public double[] PercentThresholds { get; set; } = { 30, 60, 90 };
+    public double[] TempThresholds { get; set; } = { 55, 65, 75 };
+
     public async Task<bool> StartAsync()
     {
         var factory = new Win32KeyboardDeviceFactory();
@@ -108,6 +114,13 @@ internal sealed class KeyboardController : IAsyncDisposable
             KeyMask mask = KeyMask.FromIndices(zone.KeyIndices is int[] arr ? arr : zone.KeyIndices.ToArray());
             AddEffectLayers(layers, $"zone-{z}", zone.Effect, zone.Color, mask, baseZ: z);
             z += 100;
+        }
+
+        // System-metric bars overlay on top of the global effect and zones.
+        if (ShowMetrics)
+        {
+            layers.Add(new MetricOverlayLayer("metrics", _sensors, MetricLayouts.Build(MetricLayout),
+                                              PercentThresholds, TempThresholds, zOrder: 500));
         }
 
         // Master brightness on top: a Multiply layer that uniformly scales the result.
