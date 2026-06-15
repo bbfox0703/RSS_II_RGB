@@ -20,7 +20,10 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="NAudio" Version="2.3.0" />
+    <!-- Wasapi (+ its NAudio.Core dependency) is all we use: WASAPI loopback capture
+         and the FFT. The full NAudio meta-package drags in NAudio.WinForms, which
+         would force the heavier .NET Desktop Runtime; this keeps it to the base runtime. -->
+    <PackageReference Include="NAudio.Wasapi" Version="2.3.0" />
   </ItemGroup>
 
 </Project>

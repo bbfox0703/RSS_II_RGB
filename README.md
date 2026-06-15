@@ -26,7 +26,9 @@ if you have a second keyboard from another brand connected.
    [**Releases**](../../releases) page and unzip it anywhere.
 2. **Close Armoury Crate / OpenRGB first** — only one app can control the
    keyboard at a time.
-3. Run `RSS_II_RGB.App.exe`. It's a self-contained build — no .NET install needed.
+3. Run `RSS_II_RGB.App.exe`. The lighting is a self-contained native build — no
+   .NET install needed. (The audio + system‑metric features use a small helper
+   that needs the .NET 10 Runtime; see [Requirements](#requirements).)
 
 The app starts in the system tray. **Closing or minimising** the window hides it
 to the tray (your lighting keeps running); **right‑click the tray icon → Show**
@@ -79,6 +81,12 @@ anything nothing else is touching.
 - Windows 10/11 (x64).
 - An ASUS ROG Strix Scope II **RX** (or **NX**) keyboard.
 - **Close Armoury Crate / OpenRGB first.**
+- **.NET runtime for audio + metrics:** the keyboard **lighting** is a
+  self‑contained native (AOT) build and needs nothing installed. The
+  **audio‑reactive** and **system‑metric** features run in a small helper process
+  (`sensorshost\`) that is *not* AOT — it needs the **.NET 10 Runtime**
+  (`dotnet-runtime-10.0`, the base runtime — not the Desktop or SDK) installed.
+  Without it, those two features are simply unavailable; **all lighting still works**.
 - GPU **utilisation and temperature** use NVIDIA **NVML** (`nvml.dll`, installed
   with the driver). On non‑NVIDIA systems those two metrics show no data; CPU %,
   memory %, and all lighting still work.
