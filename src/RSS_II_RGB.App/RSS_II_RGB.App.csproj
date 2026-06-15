@@ -63,4 +63,26 @@
           SkipUnchangedFiles="true" />
   </Target>
 
+  <!--
+    The GifBakeHost is a second non-AOT process (also not referenced — Magick.NET must
+    NOT be linked into the AOT app). Build it and copy its FULL output (incl. the
+    native image libs) into a gifbakehost\ subfolder next to the app, where
+    GifImportService finds it.
+  -->
+  <Target Name="BuildAndCopyGifBakeHost" AfterTargets="Build;Publish">
+    <MSBuild Projects="..\RSS_II_RGB.GifBakeHost\RSS_II_RGB.GifBakeHost.csproj"
+             Targets="Build" Properties="Configuration=$(Configuration)"
+             RemoveProperties="RuntimeIdentifier;RuntimeIdentifiers;SelfContained;PublishAot;PublishTrimmed;PublishSingleFile" />
+    <ItemGroup>
+      <_GifBakeHostFiles Include="..\RSS_II_RGB.GifBakeHost\bin\$(Configuration)\net10.0-windows\**\*.*" />
+    </ItemGroup>
+    <Copy SourceFiles="@(_GifBakeHostFiles)"
+          DestinationFolder="$(OutDir)gifbakehost\%(RecursiveDir)"
+          SkipUnchangedFiles="true" />
+    <Copy Condition="'$(PublishDir)' != ''"
+          SourceFiles="@(_GifBakeHostFiles)"
+          DestinationFolder="$(PublishDir)gifbakehost\%(RecursiveDir)"
+          SkipUnchangedFiles="true" />
+  </Target>
+
 </Project>

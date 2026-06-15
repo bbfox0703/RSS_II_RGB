@@ -42,7 +42,12 @@ no restart needed. The status line shows whether it's connected or searching.
 ## Using the app
 
 - **Effect** — pick a base look for the whole keyboard: Off, Solid, Breathing,
-  Rainbow, or Wave. Set its **Colour** and **Brightness**.
+  Rainbow, Wave, or **GIF** (see below). Set its **Colour** and **Brightness**.
+- **GIF animation** — **Import GIF…**, then drag a 4:1 box over the part you want
+  on the keys (the box is locked to the keyboard's shape). The GIF is pixelated to
+  the 24×6 key grid and loops — great for custom colour‑shifting animations the
+  built‑in effects can't make (rainbow sweeps, fireworks, etc.). Make a GIF that
+  plays several looks in sequence and the keyboard plays them in sequence too.
 - **Overlays** — independent tick‑boxes layered on top of the base effect:
   - **Reactive** — keys flare and ripple as you type.
   - **Audio** — reacts to whatever is playing. Two mutually-exclusive layouts:
@@ -81,12 +86,14 @@ anything nothing else is touching.
 - Windows 10/11 (x64).
 - An ASUS ROG Strix Scope II **RX** (or **NX**) keyboard.
 - **Close Armoury Crate / OpenRGB first.**
-- **.NET runtime for audio + metrics:** the keyboard **lighting** is a
+- **.NET runtime for audio + metrics + GIF import:** the keyboard **lighting** is a
   self‑contained native (AOT) build and needs nothing installed. The
-  **audio‑reactive** and **system‑metric** features run in a small helper process
-  (`sensorshost\`) that is *not* AOT — it needs the **.NET 10 Runtime**
-  (`dotnet-runtime-10.0`, the base runtime — not the Desktop or SDK) installed.
-  Without it, those two features are simply unavailable; **all lighting still works**.
+  **audio‑reactive** and **system‑metric** features (`sensorshost\`) and the
+  **GIF‑import** step (`gifbakehost\`) run in small helper processes that are *not*
+  AOT — they need the **.NET 10 Runtime** (`dotnet-runtime-10.0`, the base runtime —
+  not the Desktop or SDK) installed. Without it, those features are simply
+  unavailable; **all lighting still works** (a GIF imported earlier keeps playing —
+  only re‑importing needs the runtime).
 - GPU **utilisation and temperature** use NVIDIA **NVML** (`nvml.dll`, installed
   with the driver). On non‑NVIDIA systems those two metrics show no data; CPU %,
   memory %, and all lighting still work.
@@ -119,9 +126,10 @@ dotnet test RSS_II_RGB.slnx
 dotnet publish src/RSS_II_RGB.App -r win-x64 -c Release
 ```
 
-Requires the **.NET 10 SDK**. The build also compiles the `SensorsHost` helper and
-copies it into a `sensorshost\` subfolder next to the app, where the app launches
-it from. CI runs only when you push a `vX.Y.Z` tag: it builds, tests, and — if
+Requires the **.NET 10 SDK**. The build also compiles the `SensorsHost` and
+`GifBakeHost` helpers and copies them into `sensorshost\` / `gifbakehost\`
+subfolders next to the app, where the app launches them from. CI runs only when you
+push a `vX.Y.Z` tag: it builds, tests, and — if
 those pass — publishes a release zip automatically (see
 [`.github/workflows`](.github/workflows)). Normal pushes/merges don't trigger it.
 
@@ -133,6 +141,7 @@ those pass — publishes a release zip automatically (see
 | `src/RSS_II_RGB.Windows` | The only project that calls native OS APIs — raw Win32 HID (`hid.dll`/`setupapi.dll`) and the `WH_KEYBOARD_LL` hook (`user32.dll`), plus the rotating file log. All `[LibraryImport]`, AOT‑safe. |
 | `src/RSS_II_RGB.App` | Avalonia 11 host (single‑instance, tray icon, MVVM, compiled bindings), published as Native AOT. |
 | `src/RSS_II_RGB.SensorsHost` | A separate **non‑AOT** helper that hosts the reflection‑heavy sensor/audio libraries (NAudio for audio; NVML/Win32 for metrics) and streams samples to the app over a named pipe. |
+| `src/RSS_II_RGB.GifBakeHost` | A separate **non‑AOT** helper that uses Magick.NET to decode/crop/downsample a GIF into a tiny `.kbanim` the app plays back. Keeps the native image library out of the AOT app. |
 | `tests/RSS_II_RGB.Core.Tests` | xUnit 3 unit tests for the pure logic. |
 
 See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the design rationale.

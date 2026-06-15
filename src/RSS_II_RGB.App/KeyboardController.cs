@@ -1,3 +1,4 @@
+using RSS_II_RGB.Core.Animation;
 using RSS_II_RGB.Core.Device;
 using RSS_II_RGB.Core.Effects;
 using RSS_II_RGB.Core.Effects.Layers;
@@ -39,6 +40,7 @@ internal sealed class KeyboardController : IAsyncDisposable
     private double _brightness = 1.0;
     private IReadOnlyList<Zone> _zones = Array.Empty<Zone>();
     private KeyboardProfile _profile = ScopeIILayout.Profile;
+    private KbAnim? _gifAnim; // the imported GIF animation played by EffectChoice.Gif
 
     public KeyboardController(ILogSink log, SensorState sensors)
     {
@@ -227,6 +229,13 @@ internal sealed class KeyboardController : IAsyncDisposable
         Rebuild();
     }
 
+    /// <summary>Set (or clear) the baked GIF animation played by <see cref="EffectChoice.Gif"/>.</summary>
+    public void SetGifAnimation(KbAnim? anim)
+    {
+        _gifAnim = anim;
+        Rebuild();
+    }
+
     // Fixed z-order bands for the display priority stack (higher = more on top).
     // Each band is far enough apart that per-item increments never collide.
     private const int ZBase = 0;           // Layer 0: main-UI base effect (every key)
@@ -345,6 +354,17 @@ internal sealed class KeyboardController : IAsyncDisposable
                 break;
             case EffectChoice.GpuTemp:
                 layers.Add(new TempIndicatorLayer(id, _sensors, gpu: true, mask, zOrder: baseZ));
+                break;
+            case EffectChoice.Gif:
+                // Play the imported animation; show nothing until one is imported.
+                if (_gifAnim is not null)
+                {
+                    layers.Add(new GifLayer(id, _gifAnim, mask, baseZ));
+                }
+                else
+                {
+                    layers.Add(new SolidLayer(id, Rgb.Black, mask, baseZ));
+                }
                 break;
             case EffectChoice.Audio:
                 switch (audioMode)

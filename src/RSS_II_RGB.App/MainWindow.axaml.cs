@@ -15,4 +15,12 @@ public partial class MainWindow : Window
             editor.Show(this);
         }
     }
+
+    private async void OnImportGif(object? sender, RoutedEventArgs e)
+    {
+        if (DataContext is MainViewModel vm)
+        {
+            await vm.ImportGifAsync(this);
+        }
+    }
 }

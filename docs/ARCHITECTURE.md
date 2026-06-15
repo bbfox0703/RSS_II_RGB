@@ -107,8 +107,9 @@ The app publishes as **Native AOT, trimmed, with zero IL/trim warnings**:
 - MVVM uses CommunityToolkit source generators; Avalonia uses **compiled XAML
   bindings** (`x:DataType`); settings use `System.Text.Json` source generation.
 
-The reflection‑heavy sensor/audio libraries can't be AOT‑trimmed, so they live in
-a **separate non‑AOT process**, `SensorsHost`, kept out of the main app entirely.
+The reflection‑heavy sensor/audio libraries (and the native GIF decoder) can't be
+AOT‑trimmed, so they live in **separate non‑AOT processes** — `SensorsHost` and
+`GifBakeHost` — kept out of the main app entirely.
 
 ## Sensors: the IPC seam
 
@@ -129,6 +130,30 @@ reconnects; `App/SensorService` pumps the samples into a thread‑safe
 ```
 SensorsHost (non-AOT)  --named pipe-->  App (AOT)  -->  SensorState  -->  effect layers  -->  frame
    NAudio, NVML, Win32                   NamedPipeSensorFeed
+```
+
+## GIF animation: the bake seam
+
+Playing a GIF on the keys reuses the same "keep the heavy library out of the AOT
+app" trick, but as a **one‑shot** bake rather than a stream. `GifBakeHost` is a
+second non‑AOT console helper that uses **Magick.NET** to decode a GIF, crop it to
+a user‑chosen rectangle, and downsample every frame to the keyboard grid
+(`MatrixCols`×`MatrixRows` = 24×6). It writes a tiny dependency‑free binary,
+`.kbanim` (`Core/Animation/KbAnim`: magic, grid, then per‑frame delay + RGB cells —
+~432 bytes/frame), then exits.
+
+The crop UI (`App/GifCropWindow`) is an Avalonia window that shows the GIF's first
+frame with a selection box locked to the grid's 4:1 aspect, so the result is never
+distorted. `App/GifImportService` drives the flow (file pick → crop → launch the
+helper with a `GifBakeRequest` JSON, read back a `GifBakeResult`) and saves the
+`.kbanim` under `%LOCALAPPDATA%\RSS_II_RGB\anims\`. At runtime `Core/Effects/Layers/
+GifLayer` loads the baked frames once and, each tick, picks the frame for the
+elapsed time (looping) and maps each grid cell to an LED by its `(Row, Col)` —
+so the AOT app plays the animation with **no image library linked at all**.
+
+```
+GifBakeHost (non-AOT)  --.kbanim file-->  App (AOT)  -->  GifLayer  -->  frame
+   Magick.NET: decode/crop/resize          KbAnim.Load (pure bytes)
 ```
 
 ## Persistence

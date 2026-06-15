@@ -12,4 +12,5 @@ internal enum EffectChoice
     CpuTemp,
     GpuTemp,
     Audio,
+    Gif,
 }

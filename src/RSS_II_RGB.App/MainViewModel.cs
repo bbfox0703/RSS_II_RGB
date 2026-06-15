@@ -1,8 +1,11 @@
 using System.Globalization;
+using System.IO;
+using Avalonia.Controls;
 using Avalonia.Media;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using RSS_II_RGB.Core.Animation;
 using RSS_II_RGB.Core.Rendering;
 using RSS_II_RGB.Core.Startup;
 
@@ -114,8 +117,12 @@ internal sealed partial class MainViewModel : ObservableObject
     public EffectChoice[] Effects { get; } =
     {
         EffectChoice.Off, EffectChoice.Solid, EffectChoice.Breathing,
-        EffectChoice.Rainbow, EffectChoice.Wave,
+        EffectChoice.Rainbow, EffectChoice.Wave, EffectChoice.Gif,
     };
+
+    // GIF animation effect: a one-line status describing the imported animation.
+    [ObservableProperty]
+    private string _gifStatusText = L.GifNone;
 
     public MainViewModel(KeyboardController controller, SettingsService settings, IStartupManager startup)
     {
@@ -182,6 +189,7 @@ internal sealed partial class MainViewModel : ObservableObject
             Temp2 = (decimal)s.TempThresholds[1];
             Temp3 = (decimal)s.TempThresholds[2];
         }
+        LoadGifAnimation(s);
         _loading = false;
         _ready = true;
 
@@ -210,6 +218,61 @@ internal sealed partial class MainViewModel : ObservableObject
         if (TryParseColor(hex, out Color color))
         {
             PickedColor = color;
+        }
+    }
+
+    // Restore a previously imported GIF animation so EffectChoice.Gif can play it.
+    private void LoadGifAnimation(AppSettings s)
+    {
+        if (string.IsNullOrEmpty(s.GifAnimPath) || !File.Exists(s.GifAnimPath))
+        {
+            GifStatusText = L.GifNone;
+            return;
+        }
+        try
+        {
+            KbAnim anim = KbAnim.Load(s.GifAnimPath);
+            _controller.SetGifAnimation(anim);
+            string name = string.IsNullOrEmpty(s.GifSourcePath) ? "" : Path.GetFileName(s.GifSourcePath);
+            GifStatusText = string.Format(CultureInfo.InvariantCulture, L.GifImportedFormat, name, anim.Frames.Count);
+        }
+        catch
+        {
+            GifStatusText = L.GifNone;
+        }
+    }
+
+    /// <summary>Pick a GIF, crop it, bake it, and switch the base effect to it.</summary>
+    public async Task ImportGifAsync(Window owner)
+    {
+        AppSettings s = _settings.Settings;
+        GifImportOutcome outcome = await GifImportService.ImportAsync(
+            owner, s.GifSourcePath, s.GifCrop, status => GifStatusText = status);
+        if (outcome.Cancelled)
+        {
+            return;
+        }
+        if (!outcome.Success)
+        {
+            GifStatusText = string.Format(CultureInfo.InvariantCulture, L.GifImportFailedFormat, outcome.Error);
+            return;
+        }
+
+        try
+        {
+            KbAnim anim = KbAnim.Load(outcome.AnimPath!);
+            _controller.SetGifAnimation(anim);
+            s.GifAnimPath = outcome.AnimPath;
+            s.GifSourcePath = outcome.SourcePath;
+            s.GifCrop = outcome.Crop;
+            GifStatusText = string.Format(CultureInfo.InvariantCulture, L.GifImportedFormat,
+                Path.GetFileName(outcome.SourcePath ?? ""), outcome.FrameCount) + L.GifReadyNote;
+            SelectedEffect = EffectChoice.Gif; // switches the base effect + persists via Apply()
+            _settings.Save();
+        }
+        catch (Exception ex)
+        {
+            GifStatusText = string.Format(CultureInfo.InvariantCulture, L.GifImportFailedFormat, ex.Message);
         }
     }
 

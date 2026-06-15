@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Non-AOT helper process: decodes a GIF, crops it, and downsamples every frame to
+    the keyboard grid, writing a tiny .kbanim that the AOT main app plays back. The
+    reflection-heavy / native image library (Magick.NET) is deliberately isolated
+    here, OUT of the AOT main app (CLAUDE.md rule 5). Mirrors RSS_II_RGB.SensorsHost.
+    Built and copied next to the app by a target in RSS_II_RGB.App.csproj — it is
+    intentionally NOT a ProjectReference of the app. Intentionally NOT AOT.
+  -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+    <Platforms>x64</Platforms>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\RSS_II_RGB.Core\RSS_II_RGB.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Same image library the user's SteamGifCropper uses: GIF decode + crop +
+         resize. Q8 (8-bit quantum) keeps the native payload smaller than Q16. -->
+    <PackageReference Include="Magick.NET-Q8-AnyCPU" Version="14.14.0" />
+  </ItemGroup>
+
+</Project>

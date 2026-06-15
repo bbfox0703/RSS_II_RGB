@@ -39,6 +39,14 @@ internal sealed class AppSettings
 
     public double[] TempThresholds { get; set; } = { 55, 65, 75 };
 
+    // GIF animation effect: the baked .kbanim plus the source GIF + crop rectangle
+    // (source pixels: [x, y, width, height]) so the import can be re-opened/re-edited.
+    public string? GifAnimPath { get; set; }
+
+    public string? GifSourcePath { get; set; }
+
+    public int[] GifCrop { get; set; } = Array.Empty<int>();
+
     public List<ZoneSetting> Zones { get; set; } = new();
 }
 

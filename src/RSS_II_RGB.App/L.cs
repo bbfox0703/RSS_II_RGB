@@ -39,6 +39,24 @@ internal static class L
     public static string ColorMagenta => S("Magenta", "洋紅");
     public static string ColorWhite => S("White", "白");
     public static string ZoneEditorButton => S("Zone editor…", "區域編輯器…");
+
+    // ----- GIF animation -----
+    public static string GifLabel => S("GIF animation", "GIF 動畫");
+    public static string GifImportButton => S("Import GIF…", "匯入 GIF…");
+    public static string GifNone => S("No GIF imported.", "尚未匯入 GIF。");
+    public static string GifImportedFormat => S("GIF: {0} ({1} frames)", "GIF：{0}（{1} 幀）");
+    public static string GifProcessing => S("Processing GIF… please wait.", "正在處理 GIF…請稍候。");
+    public static string GifReadyNote =>
+        S(" — baked to the keyboard; the original GIF is no longer needed.",
+          "（已烘焙到鍵盤；原始 GIF 已不再需要）");
+    public static string GifImportFailedFormat => S("GIF import failed: {0}", "GIF 匯入失敗：{0}");
+    public static string GifPickTitle => S("Choose a GIF", "選擇 GIF");
+    public static string GifCropTitle => S("Select GIF region (4:1)", "選取 GIF 區域（4:1）");
+    public static string GifCropHint =>
+        S("Drag a box over the area to show on the keyboard. The box is locked to the keyboard's 4:1 shape.",
+          "在要顯示到鍵盤的區域上拖曳方框。方框長寬比鎖定為鍵盤的 4:1。");
+    public static string GifCropOk => S("Use this region", "使用此區域");
+    public static string GifCropCancel => S("Cancel", "取消");
     public static string StartWithWindows =>
         S("Start with Windows (minimised to tray)", "開機自動啟動（最小化到系統匣）");
     public static string SystemMetricsHeader => S("System metrics (overlay)", "系統指標（疊加）");
@@ -95,6 +113,7 @@ internal static class L
         EffectChoice.CpuTemp => S("CPU temp", "CPU 溫度"),
         EffectChoice.GpuTemp => S("GPU temp", "GPU 溫度"),
         EffectChoice.Audio => S("Audio", "音訊"),
+        EffectChoice.Gif => S("GIF", "GIF 動畫"),
         _ => e.ToString(),
     };
 

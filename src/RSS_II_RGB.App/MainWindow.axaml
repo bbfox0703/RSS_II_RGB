@@ -74,6 +74,10 @@
                 <Button Content="{x:Static vm:L.ColorWhite}"   Command="{Binding SetColorCommand}" CommandParameter="FFFFFF" Margin="0,0,6,6"/>
             </WrapPanel>
 
+            <TextBlock Text="{x:Static vm:L.GifLabel}" FontWeight="SemiBold"/>
+            <Button Content="{x:Static vm:L.GifImportButton}" Click="OnImportGif" HorizontalAlignment="Left"/>
+            <TextBlock Text="{Binding GifStatusText}" Opacity="0.8" TextWrapping="Wrap"/>
+
             <Button Content="{x:Static vm:L.ZoneEditorButton}" Click="OnOpenZoneEditor"
                     IsEnabled="{Binding IsConnected}" HorizontalAlignment="Left"/>
 

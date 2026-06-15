@@ -2,6 +2,7 @@
   <Folder Name="/src/">
     <Project Path="src/RSS_II_RGB.App/RSS_II_RGB.App.csproj" />
     <Project Path="src/RSS_II_RGB.Core/RSS_II_RGB.Core.csproj" />
+    <Project Path="src/RSS_II_RGB.GifBakeHost/RSS_II_RGB.GifBakeHost.csproj" />
     <Project Path="src/RSS_II_RGB.SensorsHost/RSS_II_RGB.SensorsHost.csproj" />
     <Project Path="src/RSS_II_RGB.Windows/RSS_II_RGB.Windows.csproj" />
   </Folder>
