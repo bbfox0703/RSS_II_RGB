@@ -27,6 +27,7 @@ public sealed class RenderEngine : IAsyncDisposable
     private readonly LedFrame _frame;
     private readonly ConcurrentQueue<KeyEvent> _keyQueue = new();
     private readonly List<KeyHit> _hits = new();
+    private readonly bool[] _heldKeys; // per-LED down state, to drop OS auto-repeat
 
     // Set from any thread; applied to the compositor on the engine thread.
     private volatile IReadOnlyList<IEffectLayer>? _pendingLayers;
@@ -39,6 +40,7 @@ public sealed class RenderEngine : IAsyncDisposable
         _log = log;
         _profile = profile;
         _frame = new LedFrame(profile.LedCount);
+        _heldKeys = new bool[profile.LedCount];
         _targetFps = Math.Clamp(targetFps, 1, 240);
     }
 
@@ -133,10 +135,25 @@ public sealed class RenderEngine : IAsyncDisposable
         _hits.Clear();
         while (_keyQueue.TryDequeue(out KeyEvent ke))
         {
-            // Only key-down with a real LED becomes a reactive hit.
-            if (ke.IsDown && ke.KeyIndex >= 0)
+            if ((uint)ke.KeyIndex >= (uint)_heldKeys.Length)
             {
-                _hits.Add(new KeyHit(ke.KeyIndex, now));
+                continue; // no LED for this key
+            }
+
+            if (ke.IsDown)
+            {
+                // The first press becomes a reactive hit; the OS sends repeated
+                // key-downs while a key is held (auto-repeat / continuous input),
+                // which we drop so a held key doesn't keep re-triggering the effect.
+                if (!_heldKeys[ke.KeyIndex])
+                {
+                    _heldKeys[ke.KeyIndex] = true;
+                    _hits.Add(new KeyHit(ke.KeyIndex, now));
+                }
+            }
+            else
+            {
+                _heldKeys[ke.KeyIndex] = false; // released — the next press hits again
             }
         }
     }

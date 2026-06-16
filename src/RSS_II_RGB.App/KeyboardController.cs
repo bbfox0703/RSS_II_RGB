@@ -305,7 +305,7 @@ internal sealed class KeyboardController : IAsyncDisposable
         {
             layers.Add(new KeypressFadeLayer("reactive-fade", Rgb.White, fadeSeconds: 0.6, zOrder: ZReactive));
             layers.Add(new RippleLayer("reactive-ripple", new Rgb(0, 180, 255), speedGridPerSec: 14,
-                                       width: 1.3, fadeSeconds: 0.8, zOrder: ZReactive + 10));
+                                       width: 0.65, fadeSeconds: 0.8, zOrder: ZReactive + 10));
         }
 
         // Layer 5 — system-metric bars on top of every effect and zone.
