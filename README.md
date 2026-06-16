@@ -42,13 +42,10 @@ no restart needed. The status line shows whether it's connected or searching.
 ## Using the app
 
 - **Effect** — pick a base look for the whole keyboard: Off, Solid, Breathing,
-  Rainbow, Wave, **Starlight**, or **GIF** (see below). Set its **Colour** and
-  **Brightness**.
-- **Starlight** — a twinkling night sky: stars wink on across the keys with
-  varied flicker styles (steady, shimmer, sparkle, blink), fade out, and reappear
-  elsewhere in a new colour. Neighbouring keys never light at once and stars
-  favour open space, so the field stays sparse and drifting. No colour to set —
-  each star picks its own. Also available per zone in the Zone Editor.
+  Rainbow, Wave, or **GIF** (see below). Set its **Colour** and **Brightness**.
+  Brightness dims the **base effect only** — the overlays below (Starlight, audio,
+  reactive, metrics) stay at full visibility on top, so you can run a dim base and
+  still read the keycaps while bright stars twinkle over it.
 - **GIF animation** — **Import GIF…**, then drag a 4:1 box over the part you want
   on the keys (the box is locked to the keyboard's shape). The GIF is pixelated to
   the 24×6 key grid and loops — great for custom colour‑shifting animations the
@@ -56,6 +53,15 @@ no restart needed. The status line shows whether it's connected or searching.
   plays several looks in sequence and the keyboard plays them in sequence too.
 - **Overlays** — independent tick‑boxes layered on top of the base effect:
   - **Reactive** — keys flare and ripple as you type.
+  - **Starlight** — a twinkling night sky over your effect: stars wink on across
+    the keys with varied flicker styles (steady, shimmer, sparkle, blink), fade
+    out, and reappear elsewhere in a new colour. Neighbouring keys never light at
+    once and stars favour open space, so the field stays sparse and drifting. No
+    colour to set — each star picks its own. It sits just above the base effect
+    (and the base brightness), so the gaps between stars show your dimmed base —
+    great in a dark room where you still want to read the keycaps. For pure stars
+    on black, set the base **Effect** to **Off**. (Still available as a per-key
+    effect in the Zone Editor too.)
   - **Audio** — reacts to whatever is playing. Two mutually-exclusive layouts:
     a per-key **frequency spectrum** (sensitivity slider), or **three-region
     bars** — bass / mid / treble as horizontal VU bars across the Z, A and Tab
@@ -80,12 +86,13 @@ When more than one thing wants the same key, a fixed top‑to‑bottom order dec
 what you see:
 
 ```
-System metrics  →  Reactive  →  Audio zones  →  other zones  →  Audio  →  base effect
-   (top)                                                                    (bottom)
+System metrics  →  Reactive  →  Audio zones  →  other zones  →  Audio  →  Starlight  →  base effect
+   (top)                                                                                  (bottom)
 ```
 
-So metrics always win, reactive shows over audio, and the base effect fills
-anything nothing else is touching.
+So metrics always win, reactive shows over audio, Starlight twinkles just above the
+base, and the base effect fills anything nothing else is touching. Brightness dims
+only that base layer, so everything above it stays at full intensity.
 
 ## Requirements
 

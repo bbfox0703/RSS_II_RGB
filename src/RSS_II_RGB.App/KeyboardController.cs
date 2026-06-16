@@ -77,6 +77,11 @@ internal sealed class KeyboardController : IAsyncDisposable
     public bool EnableReactive { get; set; }
     public bool EnableAudio { get; set; }
 
+    // Starlight overlay: twinkling stars composited just above the base effect (and the
+    // base brightness), but below every other overlay — so a dimmed base stays visible
+    // through the gaps between stars.
+    public bool EnableStarlight { get; set; }
+
     // System-metric overlay configuration (set before SetGlobalEffect/SetZones).
     public bool ShowMetrics { get; set; }
     public MetricLayoutChoice MetricLayout { get; set; } = MetricLayoutChoice.FunctionRow;
@@ -239,6 +244,8 @@ internal sealed class KeyboardController : IAsyncDisposable
     // Fixed z-order bands for the display priority stack (higher = more on top).
     // Each band is far enough apart that per-item increments never collide.
     private const int ZBase = 0;           // Layer 0: main-UI base effect (every key)
+    private const int ZBrightness = 250;   // Layer 0.5: base brightness (Multiply) — dims the base only
+    private const int ZStarlight = 500;    // Layer 0.7: Starlight overlay — above base, below other overlays
     private const int ZAudio = 1_000;      // Layer 1: global Audio overlay
     private const int ZZoneOther = 10_000; // Layer 2: non-audio zones
     private const int ZZoneAudio = 20_000; // Layer 3: audio zones
@@ -258,6 +265,25 @@ internal sealed class KeyboardController : IAsyncDisposable
 
         // Layer 0 — base effect from the main UI, covering every key.
         AddEffectLayers(layers, "global", _globalEffect, _globalColor, KeyMask.All, baseZ: ZBase);
+
+        // Layer 0.5 — base brightness: a Multiply layer that dims the base effect only.
+        // It sits below the Starlight overlay and every other overlay, so dimming the
+        // base never dims the stars/audio/metrics layered on top.
+        if (_brightness < 0.999)
+        {
+            byte b = (byte)Math.Clamp(_brightness * 255.0, 0, 255);
+            layers.Add(new SolidLayer("base-brightness", new Rgb(b, b, b), KeyMask.All,
+                                      zOrder: ZBrightness, blend: BlendMode.Multiply));
+        }
+
+        // Layer 0.7 — Starlight overlay. Over-blended so the (possibly dimmed) base
+        // shows through the dark gaps between stars while lit stars sit on top — the
+        // "dim base + twinkling stars" look for a dark room.
+        if (EnableStarlight)
+        {
+            layers.Add(new StarlightLayer("starlight-overlay", KeyMask.All,
+                                          zOrder: ZStarlight, blend: BlendMode.Over));
+        }
 
         // Layer 1 — global Audio overlay. Additive so silent frames are transparent
         // and the base effect shows through. Spectrum and bars are mutually exclusive.
@@ -313,14 +339,6 @@ internal sealed class KeyboardController : IAsyncDisposable
         {
             layers.Add(new MetricOverlayLayer("metrics", _sensors, MetricLayouts.Build(MetricLayout, _profile),
                                               PercentThresholds, TempThresholds, zOrder: ZMetrics));
-        }
-
-        // Master brightness on top: a Multiply layer that uniformly scales the result.
-        if (_brightness < 0.999)
-        {
-            byte b = (byte)Math.Clamp(_brightness * 255.0, 0, 255);
-            layers.Add(new SolidLayer("master-brightness", new Rgb(b, b, b), KeyMask.All,
-                                      zOrder: 1_000_000, blend: BlendMode.Multiply));
         }
 
         engine.SetEffectLayers(layers);

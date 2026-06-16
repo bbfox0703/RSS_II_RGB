@@ -10,6 +10,13 @@ namespace RSS_II_RGB.SensorsHost;
 /// Captures system output (WASAPI loopback — no admin needed) and turns it into
 /// <see cref="BandCount"/> frequency-band magnitudes via FFT. Bands stay at zero
 /// when nothing is playing.
+///
+/// The capture self-heals: when Windows invalidates the render device (idle/sleep
+/// or hibernate wake, a USB sound card whose power is toggled, or a default-device
+/// change) NAudio's capture thread stops and raises <see cref="WasapiLoopbackCapture.RecordingStopped"/>.
+/// We catch that, go dark, and rebuild the capture from <see cref="Poll"/> with a
+/// short backoff — re-reading the (possibly new) default device and sample rate —
+/// so audio reactivity returns on its own without an app restart.
 /// </summary>
 internal sealed class AudioProvider : ISensorProvider
 {
@@ -23,8 +30,10 @@ internal sealed class AudioProvider : ISensorProvider
     private const double PeakDecay = 0.99;   // adaptive-gain decay per FFT frame
     private const double Attack = 0.55;      // temporal smoothing on a rising band (higher = calmer)
     private const double Release = 0.9;      // temporal smoothing on a falling band (~0.45s fade-out)
+    private const long RetryBackoffMs = 1000; // wait this long between (re)connect attempts
 
-    private readonly object _gate = new();
+    private readonly object _gate = new();        // guards _bands
+    private readonly object _captureLock = new();  // serialises capture create/teardown
     private readonly float[] _accum = new float[FftSize];
     private readonly double[] _peaks = new double[BandCount];    // per-band adaptive peak
     private readonly double[] _smoothed = new double[BandCount]; // temporally smoothed output
@@ -32,25 +41,21 @@ internal sealed class AudioProvider : ISensorProvider
     private int _accumPos;
     private int _sampleRate = 48000;
     private WasapiLoopbackCapture? _capture;
+    private volatile bool _capturing;
+    private volatile bool _disposed;
+    private long _nextRetryTick; // Environment.TickCount64 before which we won't retry
 
-    public void Start()
-    {
-        Array.Fill(_peaks, PeakFloor);
-        try
-        {
-            _capture = new WasapiLoopbackCapture();
-            _sampleRate = _capture.WaveFormat.SampleRate;
-            _capture.DataAvailable += OnDataAvailable;
-            _capture.StartRecording();
-        }
-        catch
-        {
-            _capture = null; // no render device — bands stay zero
-        }
-    }
+    public void Start() => TryStartCapture();
 
     public IEnumerable<SensorSample> Poll()
     {
+        // Watchdog: if the capture is down (failed start, or a device that went away),
+        // rebuild it once the backoff has elapsed. Poll runs ~30 Hz while the app is up.
+        if (!_capturing && Environment.TickCount64 >= Volatile.Read(ref _nextRetryTick))
+        {
+            TryStartCapture();
+        }
+
         double[] copy;
         lock (_gate)
         {
@@ -59,14 +64,64 @@ internal sealed class AudioProvider : ISensorProvider
         yield return new SensorSample(SensorKind.AudioBands, copy, Environment.TickCount64);
     }
 
+    // (Re)create the loopback capture against the current default render device.
+    private void TryStartCapture()
+    {
+        lock (_captureLock)
+        {
+            if (_disposed)
+            {
+                return;
+            }
+
+            DisposeCapture(); // tear down any previous (possibly dead) instance first
+            try
+            {
+                var capture = new WasapiLoopbackCapture();
+                _sampleRate = capture.WaveFormat.SampleRate;
+                capture.DataAvailable += OnDataAvailable;
+                capture.RecordingStopped += OnRecordingStopped;
+                capture.StartRecording();
+                _capture = capture;
+                ResetAnalysis();
+                _capturing = true;
+            }
+            catch
+            {
+                // No render device right now (e.g. the USB card is still powering up).
+                // Stay dark and try again after the backoff.
+                _capture = null;
+                _capturing = false;
+                Volatile.Write(ref _nextRetryTick, Environment.TickCount64 + RetryBackoffMs);
+            }
+        }
+    }
+
+    // The capture thread stopped — device lost (sleep/wake, USB power cycle, default
+    // change) or errored. Go dark and let Poll rebuild it. Disposal happens in
+    // TryStartCapture (disposing from this handler's own thread can deadlock NAudio).
+    private void OnRecordingStopped(object? sender, StoppedEventArgs e)
+    {
+        if (_disposed)
+        {
+            return;
+        }
+        _capturing = false;
+        Volatile.Write(ref _nextRetryTick, Environment.TickCount64 + RetryBackoffMs);
+        lock (_gate)
+        {
+            _bands = new double[BandCount]; // fade to black rather than freeze on the last frame
+        }
+    }
+
     private void OnDataAvailable(object? sender, WaveInEventArgs e)
     {
-        WaveFormat? format = _capture?.WaveFormat;
-        if (format is null)
+        if (sender is not WasapiLoopbackCapture capture)
         {
             return;
         }
 
+        WaveFormat format = capture.WaveFormat;
         int channels = format.Channels;
         int bytesPerSample = format.BitsPerSample / 8; // 4 (IEEE float)
         int frameSize = bytesPerSample * channels;
@@ -175,17 +230,41 @@ internal sealed class AudioProvider : ISensorProvider
         }
     }
 
+    // Reset the analysis state for a fresh capture (call under _captureLock).
+    private void ResetAnalysis()
+    {
+        Array.Fill(_peaks, PeakFloor);
+        Array.Clear(_smoothed);
+        _accumPos = 0;
+        lock (_gate)
+        {
+            _bands = new double[BandCount];
+        }
+    }
+
+    // Detach and release the current capture (call under _captureLock). Unhooking the
+    // events first means our own teardown never re-enters OnRecordingStopped.
+    private void DisposeCapture()
+    {
+        WasapiLoopbackCapture? capture = _capture;
+        _capture = null;
+        _capturing = false;
+        if (capture is null)
+        {
+            return;
+        }
+        capture.DataAvailable -= OnDataAvailable;
+        capture.RecordingStopped -= OnRecordingStopped;
+        try { capture.StopRecording(); } catch { /* device may already be gone */ }
+        try { capture.Dispose(); } catch { /* ignore */ }
+    }
+
     public void Dispose()
     {
-        try
+        _disposed = true;
+        lock (_captureLock)
         {
-            _capture?.StopRecording();
+            DisposeCapture();
         }
-        catch
-        {
-            // ignore
-        }
-        _capture?.Dispose();
-        _capture = null;
     }
 }

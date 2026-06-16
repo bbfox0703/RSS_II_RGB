@@ -41,13 +41,23 @@ reads top‑down regardless of how many zones exist:
 | 20 000+ | Audio zones | zone spectrum/volume |
 | 10 000+ | Other zones | static zone effects |
 | 1 000 | Audio overlay | global spectrum or bars (Over) |
+| 500 | Starlight overlay | twinkling stars over the base (Over) |
+| 250 | Base brightness | Multiply dimming the base effect only |
 | 0 | Base effect | main‑UI effect over every key |
 
-Reactive and the global Audio overlay are independent main‑UI toggles, not effect
-modes. Reactive composites **Additive** (flares add light, idle frames stay
-transparent); Audio uses **`Over`** (a non‑black source replaces the base so the
-spectrum/bars stay legible even on bright effects, while black is transparent).
-Reactive outranks Audio; both stay below the metric bars.
+Reactive, Starlight and the global Audio overlay are independent main‑UI toggles,
+not effect modes. Reactive composites **Additive** (flares add light, idle frames
+stay transparent); Starlight and Audio use **`Over`** (a non‑black source replaces
+the base so the stars/spectrum/bars stay legible even on bright effects, while black
+is transparent). Reactive outranks Audio outranks Starlight; all stay below the
+metric bars.
+
+**Base brightness** is itself a layer: a `Multiply` of a grey at z 250, masked to
+all keys, so it dims only what is below it — the base effect at z 0. Everything
+above (Starlight, Audio, Reactive, metrics) is composited afterwards and keeps its
+full intensity. That is what lets a dim base sit under bright twinkling stars: turn
+the base **Effect** down to, say, 20 % so the keycap legends stay faintly readable
+in a dark room, and enable the Starlight overlay on top.
 
 Effects in `Core/Effects/Layers`: Solid, Breathing, Rainbow, Wave (by column),
 Starlight (twinkling stars; one per key, neighbours excluded, distance-weighted
@@ -121,7 +131,12 @@ watchdog so it never orphans). It hosts pluggable providers:
   StatusEx`), GPU % and GPU temperature (NVML). No admin required.
 - `AudioProvider` — WASAPI loopback capture + FFT → 24 logarithmic frequency
   bands, with per‑band auto‑gain, an RMS silence gate, and fast‑attack /
-  slow‑release temporal smoothing.
+  slow‑release temporal smoothing. The capture **self‑heals**: when Windows
+  invalidates the render device (idle/sleep/hibernate wake, a USB sound card whose
+  power is toggled, or a default‑device change) NAudio raises `RecordingStopped`;
+  the provider goes dark and rebuilds the capture from its `Poll` watchdog with a
+  short backoff, re‑reading the (possibly new) default device and sample rate — so
+  audio reactivity returns on its own, with no app restart.
 
 It serialises `SensorSample` JSON lines over a named pipe
 (`\\.\pipe\RSS_II_RGB.sensors`). `Windows/NamedPipeSensorFeed` reads and

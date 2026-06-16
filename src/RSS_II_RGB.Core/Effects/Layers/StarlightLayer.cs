@@ -14,8 +14,11 @@ namespace RSS_II_RGB.Core.Effects.Layers;
 /// live star the likelier it is to be chosen — so the field stays sparse and
 /// keeps drifting around the keyboard.
 ///
-/// Opaque base layer: unlit keys stay black (the night sky), so it composes like
-/// any other base effect, both globally and per zone.
+/// As a base layer it is opaque (unlit keys stay black — the night sky), so it
+/// composes like any other base effect, both globally and per zone. Given an
+/// <see cref="BlendMode.Over"/> blend it instead acts as a transparent overlay
+/// (black keys let a base effect show through, lit stars sit on top), which is how
+/// the main-UI Starlight overlay twinkles above a dimmed base effect.
 /// </summary>
 public sealed class StarlightLayer : IEffectLayer
 {
@@ -60,21 +63,24 @@ public sealed class StarlightLayer : IEffectLayer
     private const double Tau = 2 * Math.PI;
 
     private readonly Random _rng;
+    private readonly BlendMode _blend;
     private readonly List<Star> _stars = new();
     private int[]? _keys;       // the masked LED indices, built lazily on first render
     private double _spawnCooldown;
 
-    public StarlightLayer(string id, KeyMask mask, int zOrder = 0, Random? rng = null)
+    public StarlightLayer(string id, KeyMask mask, int zOrder = 0, Random? rng = null,
+                          BlendMode blend = BlendMode.Normal)
     {
         Id = id;
         Mask = mask;
         ZOrder = zOrder;
         _rng = rng ?? new Random();
+        _blend = blend;
     }
 
     public string Id { get; }
     public int ZOrder { get; }
-    public BlendMode Blend => BlendMode.Normal;
+    public BlendMode Blend => _blend;
     public KeyMask Mask { get; }
     public bool IsComplete => false;
 

@@ -17,6 +17,9 @@ internal sealed class AppSettings
 
     public bool EnableAudio { get; set; }
 
+    // Starlight overlay (twinkling stars above the base effect, below other overlays).
+    public bool EnableStarlight { get; set; }
+
     public double AudioSensitivity { get; set; } = 0.9;
 
     // Global audio overlay: spectrum vs three-region bars, and the per-region bars multipliers.

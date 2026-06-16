@@ -52,6 +52,10 @@ internal sealed partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private bool _enableAudio;
 
+    // Starlight overlay: twinkling stars above the base effect, below the other overlays.
+    [ObservableProperty]
+    private bool _enableStarlight;
+
     // Audio visualiser brightness multiplier (1 = raw, higher fills the keyboard more).
     [ObservableProperty]
     private double _audioSensitivity = 0.9;
@@ -113,11 +117,11 @@ internal sealed partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private Color _pickedColor = Color.FromRgb(0x00, 0xFF, 0x66);
 
-    // Base effects only. Reactive and Audio are independent overlay toggles below.
+    // Base effects only. Reactive, Audio and Starlight are independent overlay toggles below.
     public EffectChoice[] Effects { get; } =
     {
         EffectChoice.Off, EffectChoice.Solid, EffectChoice.Breathing,
-        EffectChoice.Rainbow, EffectChoice.Wave, EffectChoice.Starlight, EffectChoice.Gif,
+        EffectChoice.Rainbow, EffectChoice.Wave, EffectChoice.Gif,
     };
 
     // GIF animation effect: a one-line status describing the imported animation.
@@ -146,8 +150,9 @@ internal sealed partial class MainViewModel : ObservableObject
         AppSettings s = _settings.Settings;
         EnableReactive = s.EnableReactive;
         EnableAudio = s.EnableAudio;
-        // Reactive/Audio are now overlay toggles, and CpuTemp/GpuTemp are no longer
-        // base effects. Migrate any of those legacy choices to a base + the toggle.
+        EnableStarlight = s.EnableStarlight;
+        // Reactive/Audio/Starlight are now overlay toggles, and CpuTemp/GpuTemp are no
+        // longer base effects. Migrate any of those legacy choices to a base + the toggle.
         switch (s.GlobalEffect)
         {
             case EffectChoice.Reactive:
@@ -157,6 +162,11 @@ internal sealed partial class MainViewModel : ObservableObject
             case EffectChoice.Audio:
                 SelectedEffect = EffectChoice.Off;
                 EnableAudio = true;
+                break;
+            case EffectChoice.Starlight:
+                // Old "Starlight base" = stars over black: base Off + the overlay reproduces it.
+                SelectedEffect = EffectChoice.Off;
+                EnableStarlight = true;
                 break;
             case EffectChoice.CpuTemp or EffectChoice.GpuTemp:
                 SelectedEffect = EffectChoice.Rainbow;
@@ -282,6 +292,8 @@ internal sealed partial class MainViewModel : ObservableObject
 
     partial void OnEnableAudioChanged(bool value) => Apply();
 
+    partial void OnEnableStarlightChanged(bool value) => Apply();
+
     partial void OnStartWithWindowsChanged(bool value)
     {
         if (_loading)
@@ -356,6 +368,7 @@ internal sealed partial class MainViewModel : ObservableObject
 
         _controller.EnableReactive = EnableReactive;
         _controller.EnableAudio = EnableAudio;
+        _controller.EnableStarlight = EnableStarlight;
         _controller.AudioSensitivity = AudioSensitivity;
         _controller.AudioLayout = AudioLayout;
         _controller.AudioBarsBassMultiplier = AudioBarsBassMultiplier;
@@ -375,6 +388,7 @@ internal sealed partial class MainViewModel : ObservableObject
         s.BrightnessPercent = BrightnessPercent;
         s.EnableReactive = EnableReactive;
         s.EnableAudio = EnableAudio;
+        s.EnableStarlight = EnableStarlight;
         s.AudioSensitivity = AudioSensitivity;
         s.AudioLayout = AudioLayout;
         s.AudioBarsBassMultiplier = AudioBarsBassMultiplier;

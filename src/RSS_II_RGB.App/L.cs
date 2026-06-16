@@ -21,15 +21,16 @@ internal static class L
     public static string EffectLabel => S("Effect", "效果");
     public static string OverlaysLabel => S("Overlays", "疊加層");
     public static string ReactiveOverlay => S("Reactive — keypress flare + ripple", "反應 — 按鍵閃光 + 漣漪");
+    public static string StarlightOverlay => S("Starlight — twinkling stars over your effect", "星光 — 在效果之上閃爍的星星");
     public static string AudioOverlay => S("Audio reactive", "音訊反應");
     public static string AudioLayoutLabel => S("Audio layout", "音訊佈局");
     public static string AudioBarsBassFormat => S("Bass multiplier: {0:0.0}×", "低音倍率：{0:0.0}×");
     public static string AudioBarsMidFormat => S("Mid multiplier: {0:0.0}×", "中音倍率：{0:0.0}×");
     public static string AudioBarsTrebleFormat => S("Treble multiplier: {0:0.0}×", "高音倍率：{0:0.0}×");
     public static string PriorityHint =>
-        S("Reactive sits above audio; system metrics sit above both.",
-          "反應位於音訊之上；系統指標位於兩者之上。");
-    public static string BrightnessFormat => S("Brightness: {0:0}%", "亮度：{0:0}%");
+        S("Starlight layers just above the base; reactive above audio; system metrics on top.",
+          "星光位於基礎效果之上；反應位於音訊之上；系統指標位於最上層。");
+    public static string BrightnessFormat => S("Base effect brightness: {0:0}%", "基礎效果亮度：{0:0}%");
     public static string AudioSensitivityFormat => S("Audio sensitivity: {0:0.0}×", "音訊靈敏度：{0:0.0}×");
     public static string ColourLabel => S("Colour", "顏色");
     public static string ColorRed => S("Red", "紅");

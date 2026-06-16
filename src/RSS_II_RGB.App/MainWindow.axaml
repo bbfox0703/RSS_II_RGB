@@ -30,6 +30,8 @@
             <TextBlock Text="{x:Static vm:L.OverlaysLabel}" FontWeight="SemiBold"/>
             <CheckBox Content="{x:Static vm:L.ReactiveOverlay}"
                       IsChecked="{Binding EnableReactive}" IsEnabled="{Binding IsConnected}"/>
+            <CheckBox Content="{x:Static vm:L.StarlightOverlay}"
+                      IsChecked="{Binding EnableStarlight}" IsEnabled="{Binding IsConnected}"/>
             <CheckBox Content="{x:Static vm:L.AudioOverlay}"
                       IsChecked="{Binding EnableAudio}" IsEnabled="{Binding IsConnected}"/>
             <TextBlock Text="{x:Static vm:L.AudioLayoutLabel}" FontWeight="SemiBold"/>
