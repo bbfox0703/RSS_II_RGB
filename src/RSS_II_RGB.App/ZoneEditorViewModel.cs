@@ -49,7 +49,7 @@ internal sealed partial class ZoneEditorViewModel : ObservableObject
     public EffectChoice[] ZoneEffects { get; } =
     {
         EffectChoice.Solid, EffectChoice.Breathing, EffectChoice.Rainbow,
-        EffectChoice.Wave, EffectChoice.Audio, EffectChoice.Off,
+        EffectChoice.Wave, EffectChoice.Starlight, EffectChoice.Audio, EffectChoice.Off,
     };
 
     public AudioZoneMode[] AudioModeOptions { get; } =

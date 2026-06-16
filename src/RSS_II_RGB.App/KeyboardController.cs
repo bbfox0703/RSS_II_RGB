@@ -349,6 +349,9 @@ internal sealed class KeyboardController : IAsyncDisposable
             case EffectChoice.Wave:
                 layers.Add(new WaveLayer(id, mask, zOrder: baseZ));
                 break;
+            case EffectChoice.Starlight:
+                layers.Add(new StarlightLayer(id, mask, zOrder: baseZ));
+                break;
             case EffectChoice.CpuTemp:
                 layers.Add(new TempIndicatorLayer(id, _sensors, gpu: false, mask, zOrder: baseZ));
                 break;

@@ -114,6 +114,7 @@ internal static class L
         EffectChoice.GpuTemp => S("GPU temp", "GPU 溫度"),
         EffectChoice.Audio => S("Audio", "音訊"),
         EffectChoice.Gif => S("GIF", "GIF 動畫"),
+        EffectChoice.Starlight => S("Starlight", "星光"),
         _ => e.ToString(),
     };
 

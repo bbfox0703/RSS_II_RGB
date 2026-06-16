@@ -82,6 +82,85 @@ public class EffectLayerTests
         Assert.True(t[gi].R > 0, "the pressed key should light at ripple start");
     }
 
+    // Advance a stateful layer across `ticks` frames of `step` seconds, invoking
+    // `onFrame` after each render with the rendered buffer and the elapsed time.
+    private static void RunOverTime(IEffectLayer layer, double step, int ticks,
+                                    Action<Rgb[], double> onFrame)
+    {
+        var t = new Rgb[CoreConstants.LedCount];
+        var delta = TimeSpan.FromSeconds(step);
+        for (int i = 1; i <= ticks; i++)
+        {
+            Array.Clear(t);
+            double elapsed = i * step;
+            var ctx = new EffectContext(TimeSpan.FromSeconds(elapsed), delta, Array.Empty<KeyHit>());
+            layer.Render(t, ctx);
+            onFrame(t, elapsed);
+        }
+    }
+
+    [Fact]
+    public void Starlight_LightsStarsOverTime()
+    {
+        var layer = new StarlightLayer("star", KeyMask.All, rng: new Random(1234));
+        bool everLit = false;
+        RunOverTime(layer, step: 0.04, ticks: 100, (t, _) =>
+        {
+            foreach (Rgb px in t)
+            {
+                if ((px.R | px.G | px.B) != 0) { everLit = true; }
+            }
+        });
+        Assert.True(everLit, "the starfield should light at least one key over time");
+    }
+
+    [Fact]
+    public void Starlight_NeverLightsAdjacentKeysSimultaneously()
+    {
+        // Placement forbids a star within ~1 grid cell of a live one, so at no
+        // instant should two lit keys be immediate neighbours. Holds for any seed.
+        var layer = new StarlightLayer("star", KeyMask.All, rng: new Random(7));
+        RunOverTime(layer, step: 0.03, ticks: 400, (t, _) =>
+        {
+            var lit = new List<int>();
+            for (int i = 0; i < t.Length; i++)
+            {
+                if ((t[i].R | t[i].G | t[i].B) != 0) { lit.Add(i); }
+            }
+            for (int a = 0; a < lit.Count; a++)
+            {
+                for (int b = a + 1; b < lit.Count; b++)
+                {
+                    ref readonly LedKey ka = ref ScopeIILayout.ByIndex(lit[a]);
+                    ref readonly LedKey kb = ref ScopeIILayout.ByIndex(lit[b]);
+                    double dr = ka.Row - kb.Row, dc = ka.Col - kb.Col;
+                    double dist = Math.Sqrt(dr * dr + dc * dc);
+                    Assert.True(dist > 1.5,
+                        $"keys {lit[a]} and {lit[b]} are adjacent (dist {dist:0.00}) yet both lit");
+                }
+            }
+        });
+    }
+
+    [Fact]
+    public void Starlight_StaysWithinItsMask()
+    {
+        // As a zone effect the starfield must never light a key outside its mask.
+        int[] zone = { 10, 11, 16, 17, 50, 53, 90, 97 };
+        var inMask = new HashSet<int>(zone);
+        var layer = new StarlightLayer("star", KeyMask.FromIndices(zone), rng: new Random(99));
+        RunOverTime(layer, step: 0.04, ticks: 200, (t, _) =>
+        {
+            for (int i = 0; i < t.Length; i++)
+            {
+                if ((t[i].R | t[i].G | t[i].B) != 0)
+                {
+                    Assert.Contains(i, inMask);
+                }
+            }
+        });
+    }
+
     [Fact]
     public void Ripple_RingMovesOutwardOverTime()
     {

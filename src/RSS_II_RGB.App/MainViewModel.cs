@@ -117,7 +117,7 @@ internal sealed partial class MainViewModel : ObservableObject
     public EffectChoice[] Effects { get; } =
     {
         EffectChoice.Off, EffectChoice.Solid, EffectChoice.Breathing,
-        EffectChoice.Rainbow, EffectChoice.Wave, EffectChoice.Gif,
+        EffectChoice.Rainbow, EffectChoice.Wave, EffectChoice.Starlight, EffectChoice.Gif,
     };
 
     // GIF animation effect: a one-line status describing the imported animation.

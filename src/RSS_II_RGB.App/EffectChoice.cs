@@ -13,4 +13,5 @@ internal enum EffectChoice
     GpuTemp,
     Audio,
     Gif,
+    Starlight,
 }

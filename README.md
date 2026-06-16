@@ -42,7 +42,13 @@ no restart needed. The status line shows whether it's connected or searching.
 ## Using the app
 
 - **Effect** — pick a base look for the whole keyboard: Off, Solid, Breathing,
-  Rainbow, Wave, or **GIF** (see below). Set its **Colour** and **Brightness**.
+  Rainbow, Wave, **Starlight**, or **GIF** (see below). Set its **Colour** and
+  **Brightness**.
+- **Starlight** — a twinkling night sky: stars wink on across the keys with
+  varied flicker styles (steady, shimmer, sparkle, blink), fade out, and reappear
+  elsewhere in a new colour. Neighbouring keys never light at once and stars
+  favour open space, so the field stays sparse and drifting. No colour to set —
+  each star picks its own. Also available per zone in the Zone Editor.
 - **GIF animation** — **Import GIF…**, then drag a 4:1 box over the part you want
   on the keys (the box is locked to the keyboard's shape). The GIF is pixelated to
   the 24×6 key grid and loops — great for custom colour‑shifting animations the
